@@ -40,28 +40,28 @@ export default function Home() {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
-        <p className="text-gray-500">Loading changelogs...</p>
+        <p className="text-sm text-gray-500">Loading...</p>
       </div>
     );
   }
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Changelog</h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          Stay up to date with the latest changes and improvements.
+      <div className="mb-12">
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Changelog</h1>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          All notable changes to this project will be documented here.
         </p>
       </div>
 
       {changelogs.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-gray-500 mb-4">No changelog entries yet.</p>
+        <div className="text-center py-16">
+          <p className="text-sm text-gray-500 dark:text-gray-500 mb-4">No changelog entries yet.</p>
           <a
             href="/generate"
-            className="text-blue-600 hover:text-blue-800 font-medium"
+            className="text-sm text-gray-900 dark:text-gray-100 hover:text-gray-600 dark:hover:text-gray-400 underline underline-offset-4 transition-colors"
           >
-            Generate your first changelog →
+            Generate your first changelog
           </a>
         </div>
       ) : (

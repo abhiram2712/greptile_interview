@@ -10,35 +10,36 @@ interface ChangelogEntryProps {
 
 export default function ChangelogEntry({ entry, onDelete }: ChangelogEntryProps) {
   return (
-    <article className="border-b border-gray-200 dark:border-gray-700 pb-8 mb-8 last:border-0">
-      <header className="flex justify-between items-start mb-4">
-        <div>
-          <h2 className="text-2xl font-semibold mb-1">
-            {format(new Date(entry.date), 'MMMM d, yyyy')}
-            {entry.version && <span className="ml-2 text-gray-600 dark:text-gray-400">v{entry.version}</span>}
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400 text-sm">
-            By {entry.author} • {entry.commits.length} commits
-          </p>
-        </div>
+    <article className="py-8 border-b border-gray-100 dark:border-gray-900 last:border-0">
+      <div className="flex items-baseline justify-between mb-4">
+        <time className="text-sm font-medium text-gray-900 dark:text-gray-100">
+          {format(new Date(entry.date), 'MMM d, yyyy')}
+          {entry.version && <span className="ml-2 text-gray-500 dark:text-gray-500">v{entry.version}</span>}
+        </time>
         {onDelete && (
           <button
             onClick={() => onDelete(entry.id)}
-            className="text-red-600 hover:text-red-800 text-sm"
+            className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
           >
             Delete
           </button>
         )}
-      </header>
+      </div>
       
       {entry.summary && (
-        <p className="text-gray-700 dark:text-gray-300 mb-4 italic">
+        <h3 className="text-base font-medium text-gray-900 dark:text-gray-100 mb-3">
           {entry.summary}
-        </p>
+        </h3>
       )}
       
-      <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
-        {entry.content}
+      <div className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed space-y-2">
+        {entry.content.split('\n').map((line, i) => (
+          line.trim() && <p key={i}>{line}</p>
+        ))}
+      </div>
+      
+      <div className="mt-3 text-xs text-gray-500 dark:text-gray-600">
+        {entry.author} • {entry.commits.length} commits
       </div>
     </article>
   );

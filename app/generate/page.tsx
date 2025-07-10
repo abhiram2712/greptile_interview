@@ -71,39 +71,39 @@ export default function GeneratePage() {
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Generate Changelog</h1>
-        <p className="text-gray-600 dark:text-gray-400">
+      <div className="mb-12">
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Generate Changelog</h1>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
           Select a date range to fetch commits and generate an AI-powered changelog.
         </p>
       </div>
 
-      <div className="bg-gray-50 dark:bg-gray-900 p-6 rounded-lg mb-8">
-        <h2 className="text-lg font-medium mb-4">Date Range</h2>
+      <div className="border border-gray-200 dark:border-gray-800 rounded-md p-6 mb-8">
+        <h2 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-4">Date Range</h2>
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
-            <label className="block text-sm font-medium mb-1">From</label>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">From</label>
             <input
               type="date"
               value={dateRange.since}
               onChange={(e) => setDateRange({ ...dateRange, since: e.target.value })}
-              className="w-full px-3 py-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
+              className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-800 rounded-md bg-white dark:bg-black focus:outline-none focus:ring-1 focus:ring-gray-900 dark:focus:ring-gray-100"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">To</label>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">To</label>
             <input
               type="date"
               value={dateRange.until}
               onChange={(e) => setDateRange({ ...dateRange, until: e.target.value })}
-              className="w-full px-3 py-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
+              className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-800 rounded-md bg-white dark:bg-black focus:outline-none focus:ring-1 focus:ring-gray-900 dark:focus:ring-gray-100"
             />
           </div>
         </div>
         <button
           onClick={fetchCommits}
           disabled={loading}
-          className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400"
+          className="w-full px-4 py-2 text-sm font-medium text-white bg-gray-900 dark:bg-white dark:text-gray-900 rounded-md hover:bg-gray-800 dark:hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {loading ? 'Fetching...' : 'Fetch Commits'}
         </button>
