@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import ChangelogList from '@/components/ChangelogList';
+import ChangelogListView from '@/components/ChangelogListView';
 import { ChangelogEntry as ChangelogEntryType, changelogToEntry, Changelog } from '@/lib/types';
 import { useProject } from '@/contexts/ProjectContext';
 
@@ -139,24 +139,13 @@ export default function Home() {
         </div>
       </div>
 
-      {changelogs.length === 0 ? (
-        <div className="text-center py-16">
-          <p className="text-sm text-gray-500 dark:text-gray-500 mb-4">No changelog entries yet.</p>
-          <a
-            href="/dev/generate"
-            className="text-sm text-gray-900 dark:text-gray-100 hover:text-gray-600 dark:hover:text-gray-400 underline underline-offset-4 transition-colors"
-          >
-            Generate your first changelog
-          </a>
-        </div>
-      ) : (
-        <ChangelogList 
-          entries={changelogs} 
-          projectId={selectedProjectId} 
-          onDelete={handleDelete}
-          onTogglePublish={handleTogglePublish}
-        />
-      )}
+      <ChangelogListView 
+        entries={changelogs} 
+        projectId={selectedProjectId} 
+        onDelete={handleDelete}
+        onTogglePublish={handleTogglePublish}
+        emptyActionLink="/dev/generate"
+      />
     </div>
   );
 }

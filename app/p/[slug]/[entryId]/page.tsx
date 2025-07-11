@@ -1,74 +1,82 @@
-import { notFound } from 'next/navigation';
-import { prisma } from '@/lib/prisma';
+'use client';
+
+import { useState, useEffect } from 'react';
+import { ChangelogEntry } from '@/lib/storage';
 import { format } from 'date-fns';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import { notFound } from 'next/navigation';
+import ChangelogDetailView from '@/components/ChangelogDetailView';
 
-interface PageProps {
-  params: {
-    slug: string;
-    entryId: string;
+export default function PublicChangelogDetailPage({ 
+  params 
+}: { 
+  params: { slug: string; entryId: string } 
+}) {
+  const [entry, setEntry] = useState<ChangelogEntry | null>(null);
+  const [projectName, setProjectName] = useState<string>('');
+  const [projectId, setProjectId] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchData();
+  }, [params.slug, params.entryId]);
+
+  const fetchData = async () => {
+    try {
+      // Get all projects first to find the one by slug
+      const projectsResponse = await fetch('/api/projects');
+      const projectsData = await projectsResponse.json();
+      
+      // Find the project by slug
+      const foundProject = projectsData.projects?.find((p: any) => 
+        p.slug === params.slug && p.isPublic
+      );
+      
+      if (!foundProject) {
+        setLoading(false);
+        return;
+      }
+      
+      setProjectName(foundProject.name);
+      setProjectId(foundProject.id);
+      
+      // Fetch the changelog entry
+      const response = await fetch(`/api/changelog/${params.entryId}?projectId=${foundProject.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        // Only show if published
+        if (data.entry?.published) {
+          setEntry(data.entry);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching changelog:', error);
+    } finally {
+      setLoading(false);
+    }
   };
-}
 
-export default async function PublicChangelogEntryPage({ params }: PageProps) {
-  const project = await prisma.project.findUnique({
-    where: { 
-      slug: params.slug,
-      isPublic: true,
-    },
-  });
-
-  if (!project) {
-    notFound();
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-sm text-gray-500">Loading...</p>
+      </div>
+    );
   }
 
-  const entry = await prisma.changelog.findFirst({
-    where: { 
-      id: params.entryId,
-      projectId: project.id,
-      published: true,
-    },
-  });
-
-  if (!entry) {
+  if (!entry || !projectId) {
     notFound();
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Main content */}
-        <div className="lg:col-span-3">
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm p-8">
-            <header className="mb-8">
-              <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-4">
-                <time>{format(new Date(entry.date), 'MMMM d, yyyy')}</time>
-                {entry.version && (
-                  <span className="ml-3 px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs">
-                    v{entry.version}
-                  </span>
-                )}
-              </div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                {entry.summary}
-              </h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                by {entry.author}
-              </p>
-            </header>
-
-            <div className="prose prose-gray dark:prose-invert max-w-none">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {entry.content}
-              </ReactMarkdown>
-            </div>
-          </div>
-        </div>
-
-        {/* Empty space for consistency with dev portal layout */}
-        <div className="hidden lg:block" />
-      </div>
-    </div>
+    <ChangelogDetailView
+      entry={entry}
+      projectName={projectName}
+      backLink={`/p/${params.slug}`}
+      breadcrumbs={[
+        { label: 'Changelog', href: `/p/${params.slug}` },
+        { label: projectName, href: `/p/${params.slug}` },
+        { label: format(new Date(entry.date), 'yyyy-MM-dd') }
+      ]}
+    />
   );
 }
