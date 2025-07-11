@@ -5,13 +5,16 @@ A multi-project changelog generator that helps developers quickly create user-fr
 ## Features
 
 - 🚀 **Multi-Project Support**: Manage changelogs for multiple GitHub repositories in one place
-- 🤖 **AI-Powered Summarization**: Uses OpenAI to intelligently summarize git commits into user-friendly changelog entries
+- 🤖 **AI-Powered Summarization**: Analyzes actual code changes (diffs) and repository context for accurate changelogs
 - 🔗 **GitHub Integration**: Works with any public GitHub repository - just paste the URL
 - 📅 **Date Range Selection**: Fetch commits from specific date ranges
 - ✅ **Interactive Commit Selection**: Choose which commits to include in your changelog
-- ✏️ **Editable Output**: AI-generated content can be edited before saving
-- 🎨 **Clean, Minimalistic UI**: Inspired by Stripe and Twilio changelog designs
-- 💾 **Simple Storage**: File-based storage system (easily upgradeable to database)
+- ✏️ **Full CRUD Operations**: Create, read, update, and delete changelogs
+- 🎨 **Clean, Minimalistic UI**: Inspired by Stripe and ChatGPT designs
+- 💾 **Database Storage**: Uses Prisma ORM with SQLite (easily upgradeable to PostgreSQL)
+- 🚀 **Smart Caching**: Caches commit diffs and project context to minimize API calls
+- 📝 **Edit Changelogs**: Update existing changelogs with a dedicated edit interface
+- 🗑️ **Delete Changelogs**: Remove changelogs with confirmation dialog
 
 ## Technical Decisions
 
@@ -21,11 +24,11 @@ A multi-project changelog generator that helps developers quickly create user-fr
 - Excellent TypeScript support
 - Easy deployment options
 
-### Why File-Based Storage?
-- Simple to implement and understand
-- No database setup required
-- Easy to version control changelogs
-- Can be easily migrated to a database later
+### Why Prisma with SQLite?
+- Type-safe database queries with excellent TypeScript support
+- Easy to set up with SQLite for development
+- Seamlessly upgradeable to PostgreSQL for production
+- Stores commit diffs and project context for better AI generation
 
 ### Why OpenAI for Summarization?
 - Best-in-class language model for technical writing
@@ -51,18 +54,25 @@ cd greptile_interview
 npm install
 ```
 
-3. Create a `.env.local` file with your OpenAI API key:
+3. Create a `.env` file with your API keys:
 ```bash
-cp .env.local.example .env.local
-# Edit .env.local and add your OpenAI API key
+cp .env.example .env
+# Edit .env and add:
+# - OPENAI_API_KEY (required)
+# - GITHUB_TOKEN (optional, increases rate limits)
 ```
 
-4. Run the development server:
+4. Set up the database:
+```bash
+npm run db:push
+```
+
+5. Run the development server:
 ```bash
 npm run dev
 ```
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser
+6. Open [http://localhost:3000](http://localhost:3000) in your browser
 
 ## Usage
 
@@ -84,12 +94,12 @@ npm run dev
 8. Add version number, author name, and other details
 9. Click "Save Changelog" to publish
 
-### Viewing Changelogs
+### Managing Changelogs
 
-1. Select a project from the sidebar
-2. Navigate to `/` (home page)
-3. View all published changelogs for that project in chronological order
-4. Delete entries if needed (with confirmation)
+1. **View**: Select a project from the sidebar on the home page
+2. **Edit**: Hover over a changelog entry and click the pencil icon
+3. **Delete**: Hover over a changelog entry and click the trash icon
+4. **Details**: Click on any changelog to view the full formatted content
 
 ## Project Structure
 
@@ -110,12 +120,14 @@ greptile_interview/
 │   └── LayoutWithSidebar.tsx # Layout wrapper
 ├── lib/                   # Utility functions
 │   ├── github.ts         # GitHub API integration
-│   ├── projects.ts       # Project management
-│   ├── ai.ts             # OpenAI integration
-│   └── storage.ts        # File storage operations
-└── public/
-    ├── changelogs/       # JSON changelog storage
-    └── projects.json     # Projects data
+│   ├── ai.ts             # Basic OpenAI integration
+│   ├── ai-enhanced.ts    # Enhanced AI with code analysis
+│   ├── prisma.ts         # Database client
+│   └── types.ts          # TypeScript type definitions
+├── prisma/
+│   └── schema.prisma     # Database schema
+└── scripts/
+    └── migrate-to-db.ts  # Migration script from file storage
 ```
 
 ## API Endpoints
@@ -130,19 +142,34 @@ greptile_interview/
 
 ### Changelogs
 - `GET /api/changelog?projectId=ID` - Get changelogs for a project
-- `POST /api/changelog` - Save a new changelog (requires projectId)
-- `DELETE /api/changelog?id=ID&projectId=PID` - Delete a changelog
-- `POST /api/changelog/generate` - Generate AI changelog summary
+- `POST /api/changelog` - Save a new changelog
+- `GET /api/changelog/[id]` - Get a specific changelog
+- `PUT /api/changelog/[id]` - Update a changelog
+- `DELETE /api/changelog/[id]` - Delete a changelog
+- `POST /api/changelog/generate` - Generate AI changelog summary with code analysis
+
+### Additional Endpoints
+- `GET /api/commits/[sha]?projectId=ID` - Get detailed commit info with diff
+- `POST /api/projects/[id]/context` - Update project context (README, tech stack)
+
+## Database Schema
+
+The application uses Prisma ORM with the following models:
+- **Project**: GitHub repository information
+- **Changelog**: Individual changelog entries
+- **Commit**: Git commits with diffs and file changes
+- **ProjectContext**: Repository metadata (README, tech stack, file structure)
+- **ChangelogCommit**: Many-to-many relation between changelogs and commits
 
 ## Future Enhancements
 
-- **Database Integration**: Migrate from file storage to PostgreSQL/MongoDB
 - **Authentication**: Add user authentication for team environments
 - **Markdown Export**: Export changelogs as markdown files
 - **Webhook Integration**: Auto-generate changelogs on git push
 - **Custom AI Prompts**: Allow customization of AI generation prompts
 - **Version Detection**: Auto-detect version numbers from tags
 - **RSS Feed**: Provide RSS feed for changelog subscribers
+- **Private Repos**: Support for private GitHub repositories
 
 ## Contributing
 

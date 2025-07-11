@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllProjects, saveProject, deleteProject } from '@/lib/projects';
 import { parseGitHubUrl } from '@/lib/github';
+import { prisma } from '@/lib/prisma';
+import { generateProjectSlug } from '@/lib/utils';
 
 export async function GET() {
   try {
-    const projects = await getAllProjects();
+    const projects = await prisma.project.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
     return NextResponse.json({ projects });
   } catch (error) {
     console.error('Error fetching projects:', error);
@@ -35,11 +38,28 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    const project = await saveProject({
-      name: body.name || `${parsed.owner}/${parsed.repo}`,
-      githubUrl: parsed.url,
-      owner: parsed.owner,
-      repo: parsed.repo,
+    const slug = generateProjectSlug(parsed.owner, parsed.repo);
+    
+    // Check if slug already exists
+    const existing = await prisma.project.findUnique({
+      where: { slug },
+    });
+    
+    if (existing) {
+      return NextResponse.json(
+        { error: 'Project already exists' },
+        { status: 409 }
+      );
+    }
+    
+    const project = await prisma.project.create({
+      data: {
+        name: body.name || `${parsed.owner}/${parsed.repo}`,
+        githubUrl: parsed.url,
+        owner: parsed.owner,
+        repo: parsed.repo,
+        slug,
+      },
     });
     
     return NextResponse.json({ project });
@@ -64,9 +84,11 @@ export async function DELETE(request: NextRequest) {
       );
     }
     
-    const success = await deleteProject(id);
+    const project = await prisma.project.delete({
+      where: { id },
+    }).catch(() => null);
     
-    if (!success) {
+    if (!project) {
       return NextResponse.json(
         { error: 'Project not found' },
         { status: 404 }

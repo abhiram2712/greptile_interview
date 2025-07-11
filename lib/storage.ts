@@ -10,6 +10,7 @@ export interface ChangelogEntry {
   content: string;
   commits: string[];
   author: string;
+  published?: boolean;
   createdAt: string;
 }
 

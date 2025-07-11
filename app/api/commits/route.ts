@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchGitHubCommits, transformGitHubCommit } from '@/lib/github';
-import { getProject } from '@/lib/projects';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,7 +18,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const project = await getProject(projectId);
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+    });
     console.log('Found project:', project);
     
     if (!project) {

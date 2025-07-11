@@ -11,6 +11,22 @@ export interface GitHubCommit {
   author: {
     login: string;
   } | null;
+  stats?: {
+    total: number;
+    additions: number;
+    deletions: number;
+  };
+  files?: GitHubFile[];
+}
+
+export interface GitHubFile {
+  sha: string;
+  filename: string;
+  status: string;
+  additions: number;
+  deletions: number;
+  changes: number;
+  patch?: string;
 }
 
 export interface GitHubRepo {
@@ -102,4 +118,111 @@ export function transformGitHubCommit(ghCommit: GitHubCommit) {
     date: new Date(ghCommit.commit.author.date),
     message: ghCommit.commit.message.split('\n')[0], // First line only
   };
+}
+
+export async function fetchCommitDetails(
+  owner: string,
+  repo: string,
+  sha: string
+): Promise<GitHubCommit> {
+  const url = `https://api.github.com/repos/${owner}/${repo}/commits/${sha}`;
+  
+  const response = await fetch(url, {
+    headers: {
+      'Accept': 'application/vnd.github.v3+json',
+      ...(process.env.GITHUB_TOKEN && {
+        'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`
+      })
+    }
+  });
+  
+  if (!response.ok) {
+    throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+  }
+  
+  return response.json();
+}
+
+export async function fetchRepositoryReadme(
+  owner: string,
+  repo: string
+): Promise<string | null> {
+  try {
+    const url = `https://api.github.com/repos/${owner}/${repo}/readme`;
+    
+    const response = await fetch(url, {
+      headers: {
+        'Accept': 'application/vnd.github.v3.raw',
+        ...(process.env.GITHUB_TOKEN && {
+          'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`
+        })
+      }
+    });
+    
+    if (!response.ok) {
+      return null;
+    }
+    
+    return response.text();
+  } catch (error) {
+    console.error('Error fetching README:', error);
+    return null;
+  }
+}
+
+export async function fetchRepositoryStructure(
+  owner: string,
+  repo: string,
+  path: string = ''
+): Promise<any[]> {
+  try {
+    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+    
+    const response = await fetch(url, {
+      headers: {
+        'Accept': 'application/vnd.github.v3+json',
+        ...(process.env.GITHUB_TOKEN && {
+          'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`
+        })
+      }
+    });
+    
+    if (!response.ok) {
+      return [];
+    }
+    
+    return response.json();
+  } catch (error) {
+    console.error('Error fetching repository structure:', error);
+    return [];
+  }
+}
+
+export async function fetchFileContent(
+  owner: string,
+  repo: string,
+  path: string,
+  ref?: string
+): Promise<string | null> {
+  try {
+    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}${ref ? `?ref=${ref}` : ''}`;
+    
+    const response = await fetch(url, {
+      headers: {
+        'Accept': 'application/vnd.github.v3.raw',
+        ...(process.env.GITHUB_TOKEN && {
+          'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`
+        })
+      }
+    });
+    
+    if (!response.ok) {
+      return null;
+    }
+    
+    return response.text();
+  } catch (error) {
+    console.error('Error fetching file content:', error);
+    return null;
+  }
 }

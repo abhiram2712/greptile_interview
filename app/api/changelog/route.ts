@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllChangelogs, saveChangelog, deleteChangelog, getChangelogsByProject } from '@/lib/storage';
-import { ChangelogEntry } from '@/lib/storage';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,8 +7,14 @@ export async function GET(request: NextRequest) {
     const projectId = searchParams.get('projectId');
     
     const changelogs = projectId 
-      ? await getChangelogsByProject(projectId)
-      : await getAllChangelogs();
+      ? await prisma.changelog.findMany({
+          where: { projectId },
+          orderBy: { date: 'desc' },
+        })
+      : await prisma.changelog.findMany({
+          orderBy: { date: 'desc' },
+          include: { project: true },
+        });
       
     return NextResponse.json({ changelogs });
   } catch (error) {
@@ -32,19 +37,41 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    const entry: ChangelogEntry = {
-      id: Date.now().toString(),
-      projectId: body.projectId,
-      date: body.date || new Date().toISOString().split('T')[0],
-      version: body.version,
-      summary: body.summary,
-      content: body.content,
-      commits: body.commits || [],
-      author: body.author || 'Unknown',
-      createdAt: new Date().toISOString(),
-    };
+    const entry = await prisma.changelog.create({
+      data: {
+        projectId: body.projectId,
+        date: body.date ? new Date(body.date) : new Date(),
+        version: body.version || '',
+        summary: body.summary || '',
+        content: body.content || '',
+        author: body.author || 'Unknown',
+        published: false, // Start as draft
+      },
+    });
 
-    await saveChangelog(entry);
+    // Link commits to changelog if provided
+    if (body.commits && body.commits.length > 0) {
+      // body.commits contains SHA hashes
+      const commitShas = body.commits;
+      
+      // Find existing commits in the database
+      const existingCommits = await prisma.commit.findMany({
+        where: {
+          projectId: body.projectId,
+          sha: { in: commitShas },
+        },
+      });
+      
+      // Create changelog-commit relations
+      if (existingCommits.length > 0) {
+        await prisma.changelogCommit.createMany({
+          data: existingCommits.map(commit => ({
+            changelogId: entry.id,
+            commitId: commit.id,
+          })),
+        });
+      }
+    }
 
     return NextResponse.json({ entry });
   } catch (error) {
@@ -56,27 +83,3 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function DELETE(request: NextRequest) {
-  try {
-    const searchParams = request.nextUrl.searchParams;
-    const id = searchParams.get('id');
-    const projectId = searchParams.get('projectId');
-
-    if (!id || !projectId) {
-      return NextResponse.json(
-        { error: 'Changelog ID and Project ID are required' },
-        { status: 400 }
-      );
-    }
-
-    await deleteChangelog(id, projectId);
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Error deleting changelog:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete changelog' },
-      { status: 500 }
-    );
-  }
-}
