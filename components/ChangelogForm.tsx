@@ -48,11 +48,16 @@ export default function ChangelogForm({
   };
 
   const handleSave = () => {
+    const finalContent = content || generatedContent;
+    const lines = finalContent.split('\n');
+    const firstLine = lines[0] || '';
+    const restContent = lines.slice(2).join('\n'); // Skip first line and blank line
+    
     onSave({
       date,
       version,
-      summary: summary || content.split('\n')[0],
-      content: content || generatedContent,
+      summary: summary || firstLine,
+      content: summary ? finalContent : restContent, // If custom summary, keep full content
       commits: selectedCommits,
       author: author || 'AI Generated',
     });

@@ -23,13 +23,27 @@ Git commits:
 ${commitMessages}
 
 Create a changelog entry with:
-1. A brief summary (1-2 sentences)
-2. Categorized changes (Added, Changed, Fixed, Removed)
-3. Focus on user-facing changes, not internal refactoring
-4. Use clear, concise language
-5. Group related changes together
+1. FIRST LINE: A single, concise summary sentence (max 80 characters) that captures the main change
+2. BLANK LINE
+3. Detailed changes organized by category (### Added, ### Changed, ### Fixed, ### Removed)
+4. Focus on user-facing changes, not internal refactoring
+5. Use clear, concise language
+6. Group related changes together
 
-Format the output in Markdown.`;
+Example format:
+Improved authentication flow and added OAuth support
+
+### Added
+- OAuth 2.0 support for Google and GitHub
+- Remember me functionality
+
+### Changed
+- Streamlined login process
+- Updated password requirements
+
+### Fixed
+- Session timeout issues
+- Email validation bugs`;
 
   try {
     const response = await openai.chat.completions.create({

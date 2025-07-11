@@ -53,6 +53,7 @@ export default function GeneratePage() {
 
   const handleGenerate = async (selectedCommits: GitCommit[]) => {
     setIsGenerating(true);
+    setGeneratedContent(''); // Clear previous content
     try {
       const response = await fetch('/api/changelog/generate', {
         method: 'POST',

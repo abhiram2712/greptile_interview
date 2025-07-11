@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import ChangelogEntry from '@/components/ChangelogEntry';
+import ChangelogList from '@/components/ChangelogList';
 import { ChangelogEntry as ChangelogEntryType } from '@/lib/storage';
 import { useProject } from '@/contexts/ProjectContext';
 
@@ -83,15 +83,7 @@ export default function Home() {
           </a>
         </div>
       ) : (
-        <div>
-          {changelogs.map(entry => (
-            <ChangelogEntry
-              key={entry.id}
-              entry={entry}
-              onDelete={handleDelete}
-            />
-          ))}
-        </div>
+        <ChangelogList entries={changelogs} projectId={selectedProjectId} />
       )}
     </div>
   );
