@@ -109,10 +109,9 @@ export default function Home() {
 
   return (
     <div>
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-gray-800 dark:text-gray-200">Changelog</h1>
-          {currentProject?.slug && (
+      {currentProject?.slug && (
+        <div className="mb-8">
+          <div className="flex items-center justify-end">
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-500 dark:text-gray-400">Public URL:</span>
               <a
@@ -135,9 +134,9 @@ export default function Home() {
                 </svg>
               </button>
             </div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
 
       <ChangelogListView 
         entries={changelogs} 
