@@ -1,8 +1,8 @@
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { format } from 'date-fns';
-import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface PageProps {
   params: {
@@ -36,45 +36,39 @@ export default async function PublicChangelogEntryPage({ params }: PageProps) {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-16">
-      {/* Back link */}
-      <Link 
-        href={`/p/${params.slug}`}
-        className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 mb-8 inline-block"
-      >
-        ← Back to changelog
-      </Link>
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* Main content */}
+        <div className="lg:col-span-3">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm p-8">
+            <header className="mb-8">
+              <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-4">
+                <time>{format(new Date(entry.date), 'MMMM d, yyyy')}</time>
+                {entry.version && (
+                  <span className="ml-3 px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs">
+                    v{entry.version}
+                  </span>
+                )}
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                {entry.summary}
+              </h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                by {entry.author}
+              </p>
+            </header>
 
-      {/* Header */}
-      <header className="mb-8">
-        <time className="text-sm text-gray-500 dark:text-gray-400">
-          {format(new Date(entry.date), 'MMMM d, yyyy')}
-        </time>
-        
-        {entry.version && (
-          <span className="ml-3 text-sm font-medium text-gray-900 dark:text-gray-100">
-            v{entry.version}
-          </span>
-        )}
-        
-        <h1 className="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">
-          {entry.summary}
-        </h1>
-      </header>
+            <div className="prose prose-gray dark:prose-invert max-w-none">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {entry.content}
+              </ReactMarkdown>
+            </div>
+          </div>
+        </div>
 
-      {/* Content */}
-      <div className="prose prose-gray dark:prose-invert max-w-none">
-        <ReactMarkdown>
-          {entry.content}
-        </ReactMarkdown>
+        {/* Empty space for consistency with dev portal layout */}
+        <div className="hidden lg:block" />
       </div>
-
-      {/* Footer */}
-      <footer className="mt-16 pt-8 border-t border-gray-200 dark:border-gray-800">
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Published by {entry.author}
-        </p>
-      </footer>
     </div>
   );
 }

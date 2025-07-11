@@ -48,7 +48,7 @@ export default function EditChangelogPage({ params }: PageProps) {
     } catch (error) {
       console.error('Error fetching changelog:', error);
       alert('Failed to load changelog');
-      router.push('/');
+      router.push('/dev');
     } finally {
       setLoading(false);
     }
@@ -69,7 +69,7 @@ export default function EditChangelogPage({ params }: PageProps) {
         throw new Error('Failed to update changelog');
       }
 
-      router.push(`/changelog/${params.projectId}/${params.entryId}`);
+      router.push(`/dev/changelog/${params.projectId}/${params.entryId}`);
     } catch (error) {
       console.error('Error updating changelog:', error);
       alert('Failed to update changelog');

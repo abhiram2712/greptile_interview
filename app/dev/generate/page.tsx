@@ -85,7 +85,7 @@ export default function GeneratePage() {
       });
       
       if (response.ok) {
-        router.push('/');
+        router.push('/dev');
       } else {
         throw new Error('Failed to save');
       }

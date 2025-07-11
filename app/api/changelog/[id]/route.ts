@@ -59,6 +59,7 @@ export async function PUT(
         summary: body.summary,
         content: body.content,
         author: body.author,
+        published: body.published !== undefined ? body.published : undefined,
       },
     });
     

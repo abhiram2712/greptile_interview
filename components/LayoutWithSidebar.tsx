@@ -34,9 +34,9 @@ export default function LayoutWithSidebar({ children }: { children: React.ReactN
         <nav className="px-6 py-3">
           <div className="flex items-center space-x-1">
             <a 
-              href="/" 
+              href="/dev" 
               className={`px-3 py-2 rounded-lg text-sm transition-colors ${
-                pathname === '/' 
+                pathname === '/dev' 
                   ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100' 
                   : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800'
               }`}
@@ -44,9 +44,9 @@ export default function LayoutWithSidebar({ children }: { children: React.ReactN
               Changelog
             </a>
             <a 
-              href="/generate" 
+              href="/dev/generate" 
               className={`px-3 py-2 rounded-lg text-sm transition-colors ${
-                pathname === '/generate'
+                pathname === '/dev/generate'
                   ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
                   : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800'
               }`}
