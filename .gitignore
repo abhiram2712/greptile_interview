@@ -38,3 +38,4 @@ next-env.d.ts
 
 # changelogs storage
 /public/changelogs/*.json
+/public/projects.json

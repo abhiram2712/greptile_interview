@@ -1,10 +1,12 @@
 # AI-Powered Changelog Generator
 
-An intelligent changelog generator that helps developers quickly create user-friendly changelogs from git commits using AI.
+A multi-project changelog generator that helps developers quickly create user-friendly changelogs from GitHub commits using AI.
 
 ## Features
 
+- 🚀 **Multi-Project Support**: Manage changelogs for multiple GitHub repositories in one place
 - 🤖 **AI-Powered Summarization**: Uses OpenAI to intelligently summarize git commits into user-friendly changelog entries
+- 🔗 **GitHub Integration**: Works with any public GitHub repository - just paste the URL
 - 📅 **Date Range Selection**: Fetch commits from specific date ranges
 - ✅ **Interactive Commit Selection**: Choose which commits to include in your changelog
 - ✏️ **Editable Output**: AI-generated content can be edited before saving
@@ -64,22 +66,30 @@ npm run dev
 
 ## Usage
 
+### Adding a Project
+
+1. Click "+ Add Project" in the sidebar
+2. Paste a public GitHub repository URL (e.g., `https://github.com/facebook/react`)
+3. Click "Add" to add the project
+
 ### Generating a Changelog
 
-1. Navigate to `/generate`
-2. Select a date range to fetch commits
-3. Click "Fetch Commits" to load commits from your git repository
-4. Select the commits you want to include in the changelog
-5. Click "Generate Changelog" to create an AI-powered summary
-6. Edit the generated content if needed
-7. Add version number, author name, and other details
-8. Click "Save Changelog" to publish
+1. Select a project from the sidebar
+2. Navigate to `/generate` 
+3. Select a date range to fetch commits
+4. Click "Fetch Commits" to load commits from GitHub
+5. Select the commits you want to include in the changelog
+6. Click "Generate Changelog" to create an AI-powered summary
+7. Edit the generated content if needed
+8. Add version number, author name, and other details
+9. Click "Save Changelog" to publish
 
 ### Viewing Changelogs
 
-1. Navigate to `/` (home page)
-2. View all published changelogs in chronological order
-3. Delete entries if needed (with confirmation)
+1. Select a project from the sidebar
+2. Navigate to `/` (home page)
+3. View all published changelogs for that project in chronological order
+4. Delete entries if needed (with confirmation)
 
 ## Project Structure
 
@@ -88,28 +98,41 @@ greptile_interview/
 ├── app/                    # Next.js app directory
 │   ├── api/               # API routes
 │   │   ├── changelog/     # Changelog CRUD operations
-│   │   └── commits/       # Git commit fetching
+│   │   ├── commits/       # GitHub commit fetching
+│   │   └── projects/      # Project management
 │   ├── generate/          # Developer tool page
 │   └── page.tsx          # Public changelog page
 ├── components/            # React components
 │   ├── ChangelogEntry.tsx # Display changelog entries
 │   ├── CommitList.tsx    # Commit selection UI
-│   └── ChangelogForm.tsx # Changelog generation form
+│   ├── ChangelogForm.tsx # Changelog generation form
+│   ├── ProjectSidebar.tsx# Project selection sidebar
+│   └── LayoutWithSidebar.tsx # Layout wrapper
 ├── lib/                   # Utility functions
-│   ├── git.ts            # Git operations
+│   ├── github.ts         # GitHub API integration
+│   ├── projects.ts       # Project management
 │   ├── ai.ts             # OpenAI integration
 │   └── storage.ts        # File storage operations
 └── public/
-    └── changelogs/       # JSON changelog storage
+    ├── changelogs/       # JSON changelog storage
+    └── projects.json     # Projects data
 ```
 
 ## API Endpoints
 
-- `GET /api/commits?since=YYYY-MM-DD&until=YYYY-MM-DD` - Fetch git commits
+### Projects
+- `GET /api/projects` - Get all projects
+- `POST /api/projects` - Add a new project (requires GitHub URL)
+- `DELETE /api/projects?id=ID` - Delete a project
+
+### Commits
+- `GET /api/commits?projectId=ID&since=YYYY-MM-DD&until=YYYY-MM-DD` - Fetch GitHub commits
+
+### Changelogs
+- `GET /api/changelog?projectId=ID` - Get changelogs for a project
+- `POST /api/changelog` - Save a new changelog (requires projectId)
+- `DELETE /api/changelog?id=ID&projectId=PID` - Delete a changelog
 - `POST /api/changelog/generate` - Generate AI changelog summary
-- `GET /api/changelog` - Get all changelogs
-- `POST /api/changelog` - Save a new changelog
-- `DELETE /api/changelog?id=ID` - Delete a changelog
 
 ## Future Enhancements
 

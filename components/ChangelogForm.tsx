@@ -76,7 +76,7 @@ export default function ChangelogForm({
         <button
           onClick={handleGenerate}
           disabled={selectedCommits.length === 0 || isGenerating}
-          className="px-4 py-2 text-sm font-medium text-white bg-gray-900 dark:bg-white dark:text-gray-900 rounded-md hover:bg-gray-800 dark:hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="px-4 py-2 text-sm font-medium text-white bg-gray-700 dark:bg-gray-300 dark:text-gray-900 rounded-md hover:bg-gray-600 dark:hover:bg-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {isGenerating ? 'Generating...' : 'Generate Changelog'}
         </button>
@@ -143,7 +143,7 @@ export default function ChangelogForm({
 
           <button
             onClick={handleSave}
-            className="px-4 py-2 text-sm font-medium text-white bg-gray-900 dark:bg-white dark:text-gray-900 rounded-md hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-white bg-gray-700 dark:bg-gray-300 dark:text-gray-900 rounded-md hover:bg-gray-600 dark:hover:bg-gray-400 transition-colors"
           >
             Save Changelog
           </button>

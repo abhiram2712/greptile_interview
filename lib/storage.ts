@@ -3,6 +3,7 @@ import path from 'path';
 
 export interface ChangelogEntry {
   id: string;
+  projectId: string;
   date: string;
   version?: string;
   summary: string;
@@ -58,7 +59,7 @@ export async function saveChangelog(entry: ChangelogEntry): Promise<void> {
       fs.mkdirSync(CHANGELOG_DIR, { recursive: true });
     }
 
-    const filePath = path.join(CHANGELOG_DIR, `${entry.id}.json`);
+    const filePath = path.join(CHANGELOG_DIR, `${entry.projectId}-${entry.id}.json`);
     fs.writeFileSync(filePath, JSON.stringify(entry, null, 2));
   } catch (error) {
     console.error('Error saving changelog:', error);
@@ -66,9 +67,19 @@ export async function saveChangelog(entry: ChangelogEntry): Promise<void> {
   }
 }
 
-export async function deleteChangelog(id: string): Promise<void> {
+export async function getChangelogsByProject(projectId: string): Promise<ChangelogEntry[]> {
   try {
-    const filePath = path.join(CHANGELOG_DIR, `${id}.json`);
+    const allChangelogs = await getAllChangelogs();
+    return allChangelogs.filter(entry => entry.projectId === projectId);
+  } catch (error) {
+    console.error('Error fetching project changelogs:', error);
+    return [];
+  }
+}
+
+export async function deleteChangelog(id: string, projectId: string): Promise<void> {
+  try {
+    const filePath = path.join(CHANGELOG_DIR, `${projectId}-${id}.json`);
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
     }

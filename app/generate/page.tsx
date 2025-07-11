@@ -5,28 +5,47 @@ import { useRouter } from 'next/navigation';
 import ChangelogForm from '@/components/ChangelogForm';
 import { GitCommit } from '@/lib/git';
 import { format, subDays } from 'date-fns';
+import { useProject } from '@/contexts/ProjectContext';
 
 export default function GeneratePage() {
+  const { selectedProjectId } = useProject();
   const router = useRouter();
   const [commits, setCommits] = useState<GitCommit[]>([]);
   const [loading, setLoading] = useState(false);
   const [generatedContent, setGeneratedContent] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [dateRange, setDateRange] = useState({
-    since: format(subDays(new Date(), 7), 'yyyy-MM-dd'),
+    since: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
     until: format(new Date(), 'yyyy-MM-dd'),
   });
 
   const fetchCommits = async () => {
+    if (!selectedProjectId) {
+      console.error('No project selected');
+      return;
+    }
+    
     setLoading(true);
+    setCommits([]); // Clear previous commits
     try {
+      console.log('Fetching commits for project:', selectedProjectId, dateRange);
       const response = await fetch(
-        `/api/commits?since=${dateRange.since}&until=${dateRange.until}`
+        `/api/commits?projectId=${selectedProjectId}&since=${dateRange.since}&until=${dateRange.until}`
       );
+      
+      if (!response.ok) {
+        const error = await response.json();
+        console.error('API Error:', error);
+        alert(error.error || 'Failed to fetch commits');
+        return;
+      }
+      
       const data = await response.json();
+      console.log('Fetched commits:', data);
       setCommits(data.commits || []);
     } catch (error) {
       console.error('Error fetching commits:', error);
+      alert('Failed to fetch commits. Check console for details.');
     } finally {
       setLoading(false);
     }
@@ -51,11 +70,13 @@ export default function GeneratePage() {
   };
 
   const handleSave = async (data: any) => {
+    if (!selectedProjectId) return;
+    
     try {
       const response = await fetch('/api/changelog', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, projectId: selectedProjectId }),
       });
       
       if (response.ok) {
@@ -69,17 +90,24 @@ export default function GeneratePage() {
     }
   };
 
-  return (
-    <div>
-      <div className="mb-12">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Generate Changelog</h1>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Select a date range to fetch commits and generate an AI-powered changelog.
+  if (!selectedProjectId) {
+    return (
+      <div className="text-center py-16">
+        <p className="text-sm text-gray-500 dark:text-gray-500">
+          Select a project from the sidebar to generate changelogs
         </p>
       </div>
+    );
+  }
 
-      <div className="border border-gray-200 dark:border-gray-800 rounded-md p-6 mb-8">
-        <h2 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-4">Date Range</h2>
+  return (
+    <div>
+      <div className="mb-8">
+        <h1 className="text-xl font-semibold text-gray-800 dark:text-gray-200">Generate Changelog</h1>
+      </div>
+
+      <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-6 mb-8">
+        <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">Date Range</h2>
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">From</label>
@@ -87,7 +115,7 @@ export default function GeneratePage() {
               type="date"
               value={dateRange.since}
               onChange={(e) => setDateRange({ ...dateRange, since: e.target.value })}
-              className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-800 rounded-md bg-white dark:bg-black focus:outline-none focus:ring-1 focus:ring-gray-900 dark:focus:ring-gray-100"
+              className="w-full px-3 py-2 text-sm rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
             />
           </div>
           <div>
@@ -96,14 +124,14 @@ export default function GeneratePage() {
               type="date"
               value={dateRange.until}
               onChange={(e) => setDateRange({ ...dateRange, until: e.target.value })}
-              className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-800 rounded-md bg-white dark:bg-black focus:outline-none focus:ring-1 focus:ring-gray-900 dark:focus:ring-gray-100"
+              className="w-full px-3 py-2 text-sm rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
             />
           </div>
         </div>
         <button
           onClick={fetchCommits}
           disabled={loading}
-          className="w-full px-4 py-2 text-sm font-medium text-white bg-gray-900 dark:bg-white dark:text-gray-900 rounded-md hover:bg-gray-800 dark:hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="w-full px-4 py-2 text-sm font-medium text-white bg-gray-700 dark:bg-gray-300 dark:text-gray-900 rounded-md hover:bg-gray-600 dark:hover:bg-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {loading ? 'Fetching...' : 'Fetch Commits'}
         </button>

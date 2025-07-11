@@ -3,18 +3,27 @@
 import { useEffect, useState } from 'react';
 import ChangelogEntry from '@/components/ChangelogEntry';
 import { ChangelogEntry as ChangelogEntryType } from '@/lib/storage';
+import { useProject } from '@/contexts/ProjectContext';
 
 export default function Home() {
+  const { selectedProjectId } = useProject();
   const [changelogs, setChangelogs] = useState<ChangelogEntryType[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchChangelogs();
-  }, []);
+    if (selectedProjectId) {
+      fetchChangelogs();
+    } else {
+      setLoading(false);
+      setChangelogs([]);
+    }
+  }, [selectedProjectId]);
 
   const fetchChangelogs = async () => {
+    if (!selectedProjectId) return;
+    
     try {
-      const response = await fetch('/api/changelog');
+      const response = await fetch(`/api/changelog?projectId=${selectedProjectId}`);
       const data = await response.json();
       setChangelogs(data.changelogs || []);
     } catch (error) {
@@ -29,8 +38,10 @@ export default function Home() {
       return;
     }
 
+    if (!selectedProjectId) return;
+
     try {
-      await fetch(`/api/changelog?id=${id}`, { method: 'DELETE' });
+      await fetch(`/api/changelog?id=${id}&projectId=${selectedProjectId}`, { method: 'DELETE' });
       await fetchChangelogs();
     } catch (error) {
       console.error('Error deleting changelog:', error);
@@ -45,13 +56,20 @@ export default function Home() {
     );
   }
 
+  if (!selectedProjectId) {
+    return (
+      <div className="text-center py-16">
+        <p className="text-sm text-gray-500 dark:text-gray-500">
+          Select a project from the sidebar to view its changelog
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div>
-      <div className="mb-12">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Changelog</h1>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          All notable changes to this project will be documented here.
-        </p>
+      <div className="mb-8">
+        <h1 className="text-xl font-semibold text-gray-800 dark:text-gray-200">Changelog</h1>
       </div>
 
       {changelogs.length === 0 ? (

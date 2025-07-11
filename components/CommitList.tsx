@@ -11,15 +11,15 @@ interface CommitListProps {
 
 export default function CommitList({ commits, selectedCommits, onToggleCommit }: CommitListProps) {
   return (
-    <div className="border border-gray-200 dark:border-gray-800 rounded-md max-h-96 overflow-y-auto">
+    <div className="bg-gray-50 dark:bg-gray-900 rounded-lg max-h-96 overflow-y-auto">
       {commits.length === 0 ? (
         <p className="text-sm text-gray-500 text-center py-8">No commits found in the specified range</p>
       ) : (
-        <div className="divide-y divide-gray-100 dark:divide-gray-900">
+        <div className="p-2">
           {commits.map((commit) => (
             <label
               key={commit.hash}
-              className="flex items-start p-4 hover:bg-gray-50 dark:hover:bg-gray-950 cursor-pointer transition-colors"
+              className="flex items-start p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer transition-colors"
             >
               <input
                 type="checkbox"
