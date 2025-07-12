@@ -5,15 +5,20 @@ import {
   fetchFileContent 
 } from '@/lib/github';
 import { prisma } from '@/lib/prisma';
+import { generateProjectSummary } from '@/lib/ai-changelog-v2';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    // Find the project
+    const body = await request.json();
+    const { regenerateSummary } = body;
+
+    // Find the project with context
     const project = await prisma.project.findUnique({
       where: { id: params.id },
+      include: { context: true },
     });
 
     if (!project) {
@@ -23,6 +28,26 @@ export async function POST(
       );
     }
 
+    if (regenerateSummary) {
+      // Just regenerate the summary
+      if (!project.context) {
+        return NextResponse.json(
+          { error: 'Project context not found. Please fetch context first.' },
+          { status: 400 }
+        );
+      }
+
+      const summary = await generateProjectSummary(project.context, project.context.readme || undefined);
+      
+      const updatedContext = await prisma.projectContext.update({
+        where: { projectId: params.id },
+        data: { summary },
+      });
+
+      return NextResponse.json({ context: updatedContext });
+    }
+
+    // Full context update
     // Fetch README
     const readme = await fetchRepositoryReadme(project.owner, project.repo);
 
@@ -38,6 +63,10 @@ export async function POST(
     // Detect tech stack from files
     const techStack = await detectTechStack(project.owner, project.repo, structure);
 
+    // Generate summary
+    const tempContext = { readme, structure, techStack, projectId: params.id, id: '', updatedAt: new Date() };
+    const summary = await generateProjectSummary(tempContext, readme);
+
     // Update or create project context
     const context = await prisma.projectContext.upsert({
       where: { projectId: params.id },
@@ -46,6 +75,7 @@ export async function POST(
         structure,
         mainFiles: keyFiles,
         techStack,
+        summary,
       },
       create: {
         projectId: params.id,
@@ -53,15 +83,46 @@ export async function POST(
         structure,
         mainFiles: keyFiles,
         techStack,
+        summary,
       },
     });
-
 
     return NextResponse.json({ context });
   } catch (error: any) {
     console.error('Error updating project context:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to update project context' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const body = await request.json();
+    const { summary } = body;
+
+    if (!summary || typeof summary !== 'string') {
+      return NextResponse.json(
+        { error: 'Summary is required' },
+        { status: 400 }
+      );
+    }
+
+    // Update the summary
+    const context = await prisma.projectContext.update({
+      where: { projectId: params.id },
+      data: { summary },
+    });
+
+    return NextResponse.json({ context });
+  } catch (error: any) {
+    console.error('Error updating project summary:', error);
+    return NextResponse.json(
+      { error: error.message || 'Failed to update project summary' },
       { status: 500 }
     );
   }

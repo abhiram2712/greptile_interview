@@ -7,7 +7,10 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const project = await getProject(params.id);
+    const project = await prisma.project.findUnique({
+      where: { id: params.id },
+      include: { context: true },
+    });
     
     if (!project) {
       return NextResponse.json(
@@ -41,6 +44,7 @@ export async function PUT(
         ...(isPublic !== undefined && { isPublic }),
         ...(showSummary !== undefined && { showSummary }),
       },
+      include: { context: true },
     });
 
     return NextResponse.json({ project });
