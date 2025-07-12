@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateChangelogSummary } from '@/lib/ai';
 import { generateChangelogWithContext } from '@/lib/ai-enhanced';
+import { generateEnhancedChangelog, generateProjectSummary } from '@/lib/ai-changelog-v2';
 import { GitCommit } from '@/lib/git';
 import { prisma } from '@/lib/prisma';
 import { 
@@ -13,7 +14,7 @@ import {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { commits, previousContext, projectId } = body;
+    const { commits, previousContext, projectId, useEnhanced = true } = body;
 
     if (!commits || !Array.isArray(commits)) {
       return NextResponse.json(
@@ -120,7 +121,7 @@ export async function POST(request: NextRequest) {
       ? (Date.now() - new Date(project.context.updatedAt).getTime()) / (1000 * 60 * 60 * 24)
       : Infinity;
     
-    if (!project.context || contextAge > 7) {
+    if (!project.context || contextAge > 7 || !project.context.summary) {
       try {
         // Fetch README
         const readme = await fetchRepositoryReadme(project.owner, project.repo);
@@ -131,6 +132,18 @@ export async function POST(request: NextRequest) {
         // Detect tech stack
         const techStack = await detectTechStack(project.owner, project.repo, structure);
         
+        // Generate project summary if missing
+        let summary = project.context?.summary;
+        if (!summary && readme) {
+          try {
+            const tempContext = { readme, structure, techStack, projectId: '', id: '', updatedAt: new Date() };
+            summary = await generateProjectSummary(tempContext, readme);
+          } catch (summaryError) {
+            console.error('Error generating project summary:', summaryError);
+            // Continue without summary
+          }
+        }
+        
         // Update or create project context
         project.context = await prisma.projectContext.upsert({
           where: { projectId },
@@ -138,12 +151,14 @@ export async function POST(request: NextRequest) {
             readme,
             structure,
             techStack,
+            ...(summary && { summary }),
           },
           create: {
             projectId,
             readme,
             structure,
             techStack,
+            ...(summary && { summary }),
           },
         });
       } catch (error) {
@@ -152,14 +167,30 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // Generate enhanced changelog
-    const summary = await generateChangelogWithContext(
-      detailedCommits,
-      project.context,
-      previousContext
-    );
+    // Generate changelog based on the selected method
+    if (useEnhanced) {
+      const result = await generateEnhancedChangelog(
+        detailedCommits,
+        project.context,
+        previousContext,
+        { includeProjectSummary: false } // We'll handle summary separately
+      );
+      
+      return NextResponse.json({ 
+        summary: result.summary,
+        content: result.content,
+        projectSummary: project.context?.summary 
+      });
+    } else {
+      // Fall back to original method
+      const summary = await generateChangelogWithContext(
+        detailedCommits,
+        project.context,
+        previousContext
+      );
 
-    return NextResponse.json({ summary });
+      return NextResponse.json({ summary });
+    }
   } catch (error) {
     console.error('Error generating changelog:', error);
     return NextResponse.json(

@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { ChangelogEntry } from '@/lib/storage';
 import { format } from 'date-fns';
 import Link from 'next/link';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface ChangelogDetailViewProps {
   entry: ChangelogEntry;
@@ -73,8 +75,56 @@ export default function ChangelogDetailView({
         <div className="grid grid-cols-12 gap-8">
           {/* Content area - takes up 8 columns */}
           <article className="col-span-12 lg:col-span-8">
-            <div className="max-w-3xl">
-              <ChangelogContent content={entry.content} />
+            <div className="max-w-3xl prose prose-gray dark:prose-invert">
+              <ReactMarkdown 
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  h1: ({children}) => {
+                    const id = children?.toString().toLowerCase().replace(/\s+/g, '-') || '';
+                    return <h1 id={id} className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-8 mb-4">{children}</h1>;
+                  },
+                  h2: ({children}) => {
+                    const id = children?.toString().toLowerCase().replace(/\s+/g, '-') || '';
+                    return <h2 id={id} className="text-xl font-semibold text-gray-900 dark:text-gray-100 mt-8 mb-4">{children}</h2>;
+                  },
+                  h3: ({children}) => {
+                    const id = children?.toString().toLowerCase().replace(/\s+/g, '-') || '';
+                    return <h3 id={id} className="text-lg font-semibold text-gray-900 dark:text-gray-100 mt-6 mb-3">{children}</h3>;
+                  },
+                  p: ({children}) => <p className="text-gray-700 dark:text-gray-300 mb-4">{children}</p>,
+                  ul: ({children}) => <ul className="list-disc pl-6 mb-4 space-y-1">{children}</ul>,
+                  ol: ({children}) => <ol className="list-decimal pl-6 mb-4 space-y-1">{children}</ol>,
+                  li: ({children}) => <li className="text-gray-700 dark:text-gray-300">{children}</li>,
+                  code: ({inline, className, children}) => {
+                    if (inline) {
+                      return <code className="px-1 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-sm font-mono">{children}</code>;
+                    }
+                    return (
+                      <code className={`${className || ''} block text-sm font-mono`}>{children}</code>
+                    );
+                  },
+                  pre: ({children}) => (
+                    <pre className="mb-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg overflow-x-auto">
+                      {children}
+                    </pre>
+                  ),
+                  blockquote: ({children}) => (
+                    <blockquote className="border-l-4 border-gray-300 dark:border-gray-700 pl-4 my-4 italic text-gray-700 dark:text-gray-300">
+                      {children}
+                    </blockquote>
+                  ),
+                  strong: ({children}) => <strong className="font-semibold text-gray-900 dark:text-gray-100">{children}</strong>,
+                  em: ({children}) => <em className="italic">{children}</em>,
+                  a: ({href, children}) => (
+                    <a href={href} className="text-blue-600 dark:text-blue-400 hover:underline" target="_blank" rel="noopener noreferrer">
+                      {children}
+                    </a>
+                  ),
+                  hr: () => <hr className="my-8 border-gray-200 dark:border-gray-700" />,
+                }}
+              >
+                {entry.content}
+              </ReactMarkdown>
             </div>
           </article>
           
@@ -100,99 +150,6 @@ export default function ChangelogDetailView({
   );
 }
 
-// Component to render markdown content
-function ChangelogContent({ content }: { content: string }) {
-  const parseMarkdown = (text: string) => {
-    const lines = text.split('\n');
-    const elements: JSX.Element[] = [];
-    let currentList: string[] = [];
-    let listType: 'ul' | 'ol' | null = null;
-
-    const flushList = () => {
-      if (currentList.length > 0 && listType) {
-        const ListComponent = listType === 'ul' ? 'ul' : 'ol';
-        elements.push(
-          <ListComponent key={elements.length} className={listType === 'ul' ? 'list-disc' : 'list-decimal'} style={{ paddingLeft: '1.5rem' }}>
-            {currentList.map((item, i) => (
-              <li key={i} className="text-gray-700 dark:text-gray-300 mb-1">
-                {item}
-              </li>
-            ))}
-          </ListComponent>
-        );
-        currentList = [];
-        listType = null;
-      }
-    };
-
-    lines.forEach((line, i) => {
-      // Headers
-      if (line.startsWith('### ')) {
-        flushList();
-        const id = line.replace('### ', '').toLowerCase().replace(/\s+/g, '-');
-        elements.push(
-          <h3 key={i} id={id} className="text-lg font-semibold text-gray-900 dark:text-gray-100 mt-8 mb-4">
-            {line.replace('### ', '')}
-          </h3>
-        );
-      } else if (line.startsWith('## ')) {
-        flushList();
-        const id = line.replace('## ', '').toLowerCase().replace(/\s+/g, '-');
-        elements.push(
-          <h2 key={i} id={id} className="text-xl font-semibold text-gray-900 dark:text-gray-100 mt-8 mb-4">
-            {line.replace('## ', '')}
-          </h2>
-        );
-      } else if (line.startsWith('# ')) {
-        flushList();
-        const id = line.replace('# ', '').toLowerCase().replace(/\s+/g, '-');
-        elements.push(
-          <h1 key={i} id={id} className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-8 mb-4">
-            {line.replace('# ', '')}
-          </h1>
-        );
-      }
-      // Lists
-      else if (line.trim().startsWith('- ')) {
-        if (listType !== 'ul') {
-          flushList();
-          listType = 'ul';
-        }
-        currentList.push(line.trim().replace(/^-\s*/, ''));
-      } else if (line.trim().match(/^\d+\.\s/)) {
-        if (listType !== 'ol') {
-          flushList();
-          listType = 'ol';
-        }
-        currentList.push(line.trim().replace(/^\d+\.\s*/, ''));
-      }
-      // Code blocks
-      else if (line.trim().startsWith('```')) {
-        flushList();
-        // Skip code block markers
-      }
-      // Paragraphs
-      else if (line.trim() !== '') {
-        flushList();
-        // Check for bold text
-        let processedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        // Check for italic text
-        processedLine = processedLine.replace(/\*(.*?)\*/g, '<em>$1</em>');
-        // Check for inline code
-        processedLine = processedLine.replace(/`(.*?)`/g, '<code class="px-1 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-sm">$1</code>');
-        
-        elements.push(
-          <p key={i} className="text-gray-700 dark:text-gray-300 mb-4" dangerouslySetInnerHTML={{ __html: processedLine }} />
-        );
-      }
-    });
-
-    flushList();
-    return elements;
-  };
-
-  return <div className="space-y-2">{parseMarkdown(content)}</div>;
-}
 
 // Table of Contents component
 function TableOfContents({ content }: { content: string }) {

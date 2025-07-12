@@ -80,6 +80,17 @@ export default function PublicChangelogPage({ params }: PageProps) {
             <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
               All notable changes to {project.name} will be documented here.
             </p>
+            
+            {project.showSummary && project.context?.summary && (
+              <div className="mt-6 prose prose-sm dark:prose-invert max-w-none">
+                <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-6">
+                  <h2 className="text-base font-medium text-gray-900 dark:text-gray-100 mb-3">About {project.name}</h2>
+                  <div className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                    {project.context.summary}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

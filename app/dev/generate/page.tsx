@@ -61,11 +61,13 @@ export default function GeneratePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           commits: selectedCommits,
-          projectId: selectedProjectId
+          projectId: selectedProjectId,
+          useEnhanced: true
         }),
       });
       const data = await response.json();
-      setGeneratedContent(data.summary);
+      // Use the enhanced content if available, otherwise fall back to summary
+      setGeneratedContent(data.content || data.summary);
     } catch (error) {
       console.error('Error generating changelog:', error);
       alert('Failed to generate changelog. Please check your OpenAI API key.');

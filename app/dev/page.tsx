@@ -10,6 +10,7 @@ export default function Home() {
   const [changelogs, setChangelogs] = useState<ChangelogEntryType[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentProject, setCurrentProject] = useState<any>(null);
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     if (selectedProjectId) {
@@ -89,6 +90,30 @@ export default function Home() {
     }
   };
 
+  const handleToggleSummary = async () => {
+    if (!currentProject) return;
+    
+    try {
+      const response = await fetch(`/api/projects/${currentProject.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ showSummary: !currentProject.showSummary }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setCurrentProject(data.project);
+        alert(`Project summary ${data.project.showSummary ? 'enabled' : 'disabled'} on public page`);
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Failed to update project settings');
+      }
+    } catch (error) {
+      console.error('Error updating project settings:', error);
+      alert('Failed to update project settings');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
@@ -111,7 +136,20 @@ export default function Home() {
     <div>
       {currentProject?.slug && (
         <div className="mb-8">
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={handleToggleSummary}
+                className={`text-sm px-3 py-1 rounded-md transition-colors ${
+                  currentProject.showSummary 
+                    ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' 
+                    : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+                } hover:opacity-80`}
+                title={currentProject.showSummary ? 'Click to hide project summary on public page' : 'Click to show project summary on public page'}
+              >
+                Project Summary: {currentProject.showSummary ? 'Visible' : 'Hidden'}
+              </button>
+            </div>
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-500 dark:text-gray-400">Public URL:</span>
               <a
