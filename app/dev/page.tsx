@@ -27,6 +27,19 @@ export default function Home() {
     }
   }, [selectedProjectId]);
 
+  // Poll for context status updates
+  useEffect(() => {
+    if (!currentProject?.context || currentProject.context.status === 'ready' || currentProject.context.status === 'failed') {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      fetchProject();
+    }, 5000); // Check every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [currentProject?.context?.status, selectedProjectId]);
+
   const fetchProject = async () => {
     if (!selectedProjectId) return;
     
@@ -233,6 +246,12 @@ export default function Home() {
                       }}>
                         {regeneratingSummary ? (
                           <span className="text-gray-500 italic">Regenerating summary with AI...</span>
+                        ) : currentProject?.context?.status === 'indexing' ? (
+                          <span className="text-gray-500 italic">Indexing codebase...</span>
+                        ) : currentProject?.context?.status === 'pending' ? (
+                          <span className="text-gray-500 italic">Waiting to index codebase...</span>
+                        ) : currentProject?.context?.status === 'failed' ? (
+                          <span className="text-red-500 italic">Failed to index codebase. Click to retry.</span>
                         ) : (
                           currentProject?.context?.summary || 'No summary available. Click to add one.'
                         )}

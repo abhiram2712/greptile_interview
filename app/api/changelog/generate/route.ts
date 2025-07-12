@@ -151,6 +151,7 @@ export async function POST(request: NextRequest) {
             readme,
             structure,
             techStack,
+            status: 'ready',
             ...(summary && { summary }),
           },
           create: {
@@ -158,6 +159,7 @@ export async function POST(request: NextRequest) {
             readme,
             structure,
             techStack,
+            status: 'ready',
             ...(summary && { summary }),
           },
         });

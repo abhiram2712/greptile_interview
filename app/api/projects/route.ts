@@ -74,6 +74,16 @@ export async function POST(request: NextRequest) {
       },
     });
     
+    // Trigger background context fetching
+    // We don't await this - let it run in the background
+    fetch(`${process.env.NEXT_PUBLIC_BASE_URL || request.nextUrl.origin}/api/projects/${project.id}/context`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    }).catch(error => {
+      console.error('Background context fetch failed:', error);
+    });
+    
     return NextResponse.json({ project });
   } catch (error) {
     console.error('Error creating project:', error);

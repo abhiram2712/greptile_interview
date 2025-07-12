@@ -47,6 +47,16 @@ export async function POST(
       return NextResponse.json({ context: updatedContext });
     }
 
+    // Create or update context to indexing status
+    await prisma.projectContext.upsert({
+      where: { projectId: params.id },
+      update: { status: 'indexing' },
+      create: { 
+        projectId: params.id,
+        status: 'indexing'
+      },
+    });
+
     // Full context update
     // Fetch README
     const readme = await fetchRepositoryReadme(project.owner, project.repo);
@@ -76,6 +86,7 @@ export async function POST(
         mainFiles: keyFiles,
         techStack,
         summary,
+        status: 'ready',
       },
       create: {
         projectId: params.id,
@@ -84,12 +95,28 @@ export async function POST(
         mainFiles: keyFiles,
         techStack,
         summary,
+        status: 'ready',
       },
     });
 
     return NextResponse.json({ context });
   } catch (error: any) {
     console.error('Error updating project context:', error);
+    
+    // Mark context as failed
+    try {
+      await prisma.projectContext.upsert({
+        where: { projectId: params.id },
+        update: { status: 'failed' },
+        create: { 
+          projectId: params.id,
+          status: 'failed'
+        },
+      });
+    } catch (e) {
+      console.error('Failed to update context status:', e);
+    }
+    
     return NextResponse.json(
       { error: error.message || 'Failed to update project context' },
       { status: 500 }

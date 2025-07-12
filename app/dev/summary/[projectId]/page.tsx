@@ -14,7 +14,7 @@ interface PageProps {
 
 export default function SummaryDetailPage({ params }: PageProps) {
   const router = useRouter();
-  const { showSuccess, showError } = useToast();
+  const { showSuccess, showError, showWarning, showInfo } = useToast();
   const [project, setProject] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -74,6 +74,36 @@ export default function SummaryDetailPage({ params }: PageProps) {
   };
 
   const handleRegenerate = async () => {
+    // Check if context exists and is ready
+    if (!project?.context || (project.context.status !== 'ready' && project.context.status !== 'failed')) {
+      if (project?.context?.status === 'indexing') {
+        showWarning('Codebase is still being indexed. Please wait a moment and try again.');
+      } else if (project?.context?.status === 'pending') {
+        showInfo('Starting codebase indexing. This may take a few moments...');
+        // Trigger initial context fetch
+        try {
+          const response = await fetch(`/api/projects/${params.projectId}/context`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({}),
+          });
+          
+          if (!response.ok) {
+            const error = await response.json();
+            showError(error.error || 'Failed to start codebase indexing');
+          } else {
+            showSuccess('Codebase indexing started. Please wait a few moments and try again.');
+          }
+        } catch (error) {
+          console.error('Error starting context fetch:', error);
+          showError('Failed to start codebase indexing');
+        }
+      } else {
+        showError('Project context not found. Please try refreshing the page.');
+      }
+      return;
+    }
+    
     if (!confirm('This will regenerate the project summary using AI. Continue?')) return;
     
     setRegenerating(true);
