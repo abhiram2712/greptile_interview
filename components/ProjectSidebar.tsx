@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Project } from '@/lib/projects';
+import { useToast } from '@/contexts/ToastContext';
 
 interface ProjectSidebarProps {
   selectedProjectId?: string;
@@ -18,6 +19,7 @@ export default function ProjectSidebar({ selectedProjectId, onProjectSelect, isC
   const [loading, setLoading] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const { showSuccess, showError } = useToast();
 
   useEffect(() => {
     fetchProjects();
@@ -51,13 +53,19 @@ export default function ProjectSidebar({ selectedProjectId, onProjectSelect, isC
         setNewProjectUrl('');
         setIsAddingProject(false);
         onProjectSelect(data.project.id);
+        showSuccess('Project added successfully!');
       } else {
         const error = await response.json();
-        alert(error.error || 'Failed to add project');
+        // Show user-friendly error message
+        if (error.error && error.error.includes('private repository')) {
+          showError(error.error + '\n\nThis app only supports public GitHub repositories. Please make your repository public or choose a different repository.');
+        } else {
+          showError(error.error || 'Failed to add project');
+        }
       }
     } catch (error) {
       console.error('Error adding project:', error);
-      alert('Failed to add project');
+      showError('Failed to add project. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -77,6 +85,9 @@ export default function ProjectSidebar({ selectedProjectId, onProjectSelect, isC
         if (selectedProjectId === projectId) {
           onProjectSelect('');
         }
+        showSuccess('Project deleted successfully');
+      } else {
+        showError('Failed to delete project');
       }
     } catch (error) {
       console.error('Error deleting project:', error);

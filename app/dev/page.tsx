@@ -5,9 +5,11 @@ import Link from 'next/link';
 import ChangelogListView from '@/components/ChangelogListView';
 import { ChangelogEntry as ChangelogEntryType, changelogToEntry, Changelog } from '@/lib/types';
 import { useProject } from '@/contexts/ProjectContext';
+import { useToast } from '@/contexts/ToastContext';
 
 export default function Home() {
   const { selectedProjectId } = useProject();
+  const { showSuccess, showError } = useToast();
   const [changelogs, setChangelogs] = useState<ChangelogEntryType[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentProject, setCurrentProject] = useState<any>(null);
@@ -63,11 +65,11 @@ export default function Home() {
         await fetchChangelogs();
       } else {
         const error = await response.json();
-        alert(error.error || 'Failed to delete changelog');
+        showError(error.error || 'Failed to delete changelog');
       }
     } catch (error) {
       console.error('Error deleting changelog:', error);
-      alert('Failed to delete changelog');
+      showError('Failed to delete changelog');
     }
   };
 
@@ -83,11 +85,11 @@ export default function Home() {
         await fetchChangelogs();
       } else {
         const error = await response.json();
-        alert(error.error || 'Failed to update changelog');
+        showError(error.error || 'Failed to update changelog');
       }
     } catch (error) {
       console.error('Error updating changelog:', error);
-      alert('Failed to update changelog');
+      showError('Failed to update changelog');
     }
   };
 
@@ -104,14 +106,14 @@ export default function Home() {
       if (response.ok) {
         const data = await response.json();
         setCurrentProject(data.project);
-        alert(`Project summary ${data.project.showSummary ? 'enabled' : 'disabled'} on public page`);
+        showSuccess(`Project summary ${data.project.showSummary ? 'enabled' : 'disabled'} on public page`);
       } else {
         const error = await response.json();
-        alert(error.error || 'Failed to update project settings');
+        showError(error.error || 'Failed to update project settings');
       }
     } catch (error) {
       console.error('Error updating project settings:', error);
-      alert('Failed to update project settings');
+      showError('Failed to update project settings');
     }
   };
 
@@ -133,11 +135,11 @@ export default function Home() {
         await fetchProject();
       } else {
         const error = await response.json();
-        alert(error.error || 'Failed to regenerate project summary');
+        showError(error.error || 'Failed to regenerate project summary');
       }
     } catch (error) {
       console.error('Error regenerating project summary:', error);
-      alert('Failed to regenerate project summary');
+      showError('Failed to regenerate project summary');
     } finally {
       setRegeneratingSummary(false);
     }
@@ -194,7 +196,7 @@ export default function Home() {
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(`${window.location.origin}/p/${currentProject.slug}`);
-                  alert('Public URL copied to clipboard!');
+                  showSuccess('Public URL copied to clipboard!');
                 }}
                 className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
                 title="Copy URL"

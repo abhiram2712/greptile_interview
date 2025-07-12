@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { useProject } from '@/contexts/ProjectContext';
+import { useToast } from '@/contexts/ToastContext';
 
 interface PageProps {
   params: {
@@ -15,6 +16,7 @@ interface PageProps {
 export default function EditChangelogPage({ params }: PageProps) {
   const router = useRouter();
   const { selectedProjectId } = useProject();
+  const { showSuccess, showError } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
@@ -47,7 +49,7 @@ export default function EditChangelogPage({ params }: PageProps) {
       });
     } catch (error) {
       console.error('Error fetching changelog:', error);
-      alert('Failed to load changelog');
+      showError('Failed to load changelog');
       router.push('/dev');
     } finally {
       setLoading(false);
@@ -69,10 +71,11 @@ export default function EditChangelogPage({ params }: PageProps) {
         throw new Error('Failed to update changelog');
       }
 
+      showSuccess('Changelog updated successfully');
       router.push(`/dev/changelog/${params.projectId}/${params.entryId}`);
     } catch (error) {
       console.error('Error updating changelog:', error);
-      alert('Failed to update changelog');
+      showError('Failed to update changelog');
     } finally {
       setSaving(false);
     }

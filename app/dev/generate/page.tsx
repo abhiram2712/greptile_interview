@@ -6,10 +6,12 @@ import ChangelogForm from '@/components/ChangelogForm';
 import { GitCommit } from '@/lib/git';
 import { format, subDays } from 'date-fns';
 import { useProject } from '@/contexts/ProjectContext';
+import { useToast } from '@/contexts/ToastContext';
 
 export default function GeneratePage() {
   const { selectedProjectId } = useProject();
   const router = useRouter();
+  const { showError } = useToast();
   const [commits, setCommits] = useState<GitCommit[]>([]);
   const [loading, setLoading] = useState(false);
   const [generatedContent, setGeneratedContent] = useState('');
@@ -36,7 +38,7 @@ export default function GeneratePage() {
       if (!response.ok) {
         const error = await response.json();
         console.error('API Error:', error);
-        alert(error.error || 'Failed to fetch commits');
+        showError(error.error || 'Failed to fetch commits');
         return;
       }
       
@@ -45,7 +47,7 @@ export default function GeneratePage() {
       setCommits(data.commits || []);
     } catch (error) {
       console.error('Error fetching commits:', error);
-      alert('Failed to fetch commits. Check console for details.');
+      showError('Failed to fetch commits. Please check your repository settings.');
     } finally {
       setLoading(false);
     }
@@ -70,7 +72,7 @@ export default function GeneratePage() {
       setGeneratedContent(data.content || data.summary);
     } catch (error) {
       console.error('Error generating changelog:', error);
-      alert('Failed to generate changelog. Please check your OpenAI API key.');
+      showError('Failed to generate changelog. Please check your OpenAI API key.');
     } finally {
       setIsGenerating(false);
     }
@@ -93,7 +95,7 @@ export default function GeneratePage() {
       }
     } catch (error) {
       console.error('Error saving changelog:', error);
-      alert('Failed to save changelog');
+      showError('Failed to save changelog');
     }
   };
 

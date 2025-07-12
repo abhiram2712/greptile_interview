@@ -35,6 +35,13 @@ export interface GitHubRepo {
   url: string;
 }
 
+export interface GitHubRepoInfo {
+  private: boolean;
+  name: string;
+  full_name: string;
+  description?: string;
+}
+
 export function parseGitHubUrl(url: string): GitHubRepo | null {
   const patterns = [
     /github\.com\/([^\/]+)\/([^\/]+)/,
@@ -224,5 +231,42 @@ export async function fetchFileContent(
   } catch (error) {
     console.error('Error fetching file content:', error);
     return null;
+  }
+}
+
+export async function checkRepositoryAccess(
+  owner: string,
+  repo: string
+): Promise<{ isPublic: boolean; error?: string }> {
+  try {
+    const url = `https://api.github.com/repos/${owner}/${repo}`;
+    
+    const response = await fetch(url, {
+      headers: {
+        'Accept': 'application/vnd.github.v3+json',
+        ...(process.env.GITHUB_TOKEN && {
+          'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`
+        })
+      }
+    });
+    
+    if (response.status === 404) {
+      return { isPublic: false, error: 'This is a private repository. Only public repositories are supported.' };
+    }
+    
+    if (!response.ok) {
+      return { isPublic: false, error: `GitHub API error: ${response.status}` };
+    }
+    
+    const repoData: GitHubRepoInfo = await response.json();
+    
+    if (repoData.private) {
+      return { isPublic: false, error: 'This is a private repository. Only public repositories are supported.' };
+    }
+    
+    return { isPublic: true };
+  } catch (error) {
+    console.error('Error checking repository access:', error);
+    return { isPublic: false, error: 'Failed to check repository access' };
   }
 }

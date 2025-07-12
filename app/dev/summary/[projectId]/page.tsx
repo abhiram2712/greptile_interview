@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Project } from '@/lib/types';
+import { useToast } from '@/contexts/ToastContext';
 
 interface PageProps {
   params: {
@@ -13,6 +14,7 @@ interface PageProps {
 
 export default function SummaryDetailPage({ params }: PageProps) {
   const router = useRouter();
+  const { showSuccess, showError } = useToast();
   const [project, setProject] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -58,14 +60,14 @@ export default function SummaryDetailPage({ params }: PageProps) {
       if (response.ok) {
         setEditing(false);
         await fetchProject();
-        alert('Project summary updated successfully');
+        showSuccess('Project summary updated successfully');
       } else {
         const error = await response.json();
-        alert(error.error || 'Failed to update project summary');
+        showError(error.error || 'Failed to update project summary');
       }
     } catch (error) {
       console.error('Error updating project summary:', error);
-      alert('Failed to update project summary');
+      showError('Failed to update project summary');
     } finally {
       setSaving(false);
     }
@@ -88,14 +90,14 @@ export default function SummaryDetailPage({ params }: PageProps) {
           setSummaryText(data.context.summary);
         }
         await fetchProject();
-        alert('Project summary regenerated successfully');
+        showSuccess('Project summary regenerated successfully');
       } else {
         const error = await response.json();
-        alert(error.error || 'Failed to regenerate project summary');
+        showError(error.error || 'Failed to regenerate project summary');
       }
     } catch (error) {
       console.error('Error regenerating project summary:', error);
-      alert('Failed to regenerate project summary');
+      showError('Failed to regenerate project summary');
     } finally {
       setRegenerating(false);
     }
@@ -114,11 +116,11 @@ export default function SummaryDetailPage({ params }: PageProps) {
         setProject(data.project);
       } else {
         const error = await response.json();
-        alert(error.error || 'Failed to update project settings');
+        showError(error.error || 'Failed to update project settings');
       }
     } catch (error) {
       console.error('Error updating project settings:', error);
-      alert('Failed to update project settings');
+      showError('Failed to update project settings');
     }
   };
 

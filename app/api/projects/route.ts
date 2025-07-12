@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { parseGitHubUrl } from '@/lib/github';
+import { parseGitHubUrl, checkRepositoryAccess } from '@/lib/github';
 import { prisma } from '@/lib/prisma';
 import { generateProjectSlug } from '@/lib/utils';
 
@@ -38,6 +38,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Invalid GitHub URL' },
         { status: 400 }
+      );
+    }
+    
+    // Check if repository is public
+    const accessCheck = await checkRepositoryAccess(parsed.owner, parsed.repo);
+    if (!accessCheck.isPublic) {
+      return NextResponse.json(
+        { error: accessCheck.error || 'Repository is not accessible' },
+        { status: 403 }
       );
     }
     
