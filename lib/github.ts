@@ -86,10 +86,9 @@ export async function fetchGitHubCommits(
   }
   
   if (until) {
-    // Add one day and create date at local midnight (since until is exclusive)
-    const untilDate = new Date(until + 'T00:00:00');
-    untilDate.setDate(untilDate.getDate() + 1);
-    console.log('Until date (next day):', until, '->', untilDate.toISOString());
+    // Set to end of day (23:59:59.999) in local timezone to capture full day
+    const untilDate = new Date(until + 'T23:59:59.999');
+    console.log('Until date (end of day):', until, '->', untilDate.toISOString());
     params.append('until', untilDate.toISOString());
   }
   

@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { changelogToEntry, Changelog, ChangelogEntry } from '@/lib/types';
 import { notFound } from 'next/navigation';
-import ChangelogListView from '@/components/ChangelogListView';
 import { formatDisplayDate } from '@/lib/date-utils';
 import Link from 'next/link';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import { useProject } from '@/hooks/useProject';
+import { useChangelogs } from '@/hooks/useChangelogs';
 
 interface PageProps {
   params: {
@@ -14,57 +14,16 @@ interface PageProps {
 }
 
 export default function PublicChangelogPage({ params }: PageProps) {
-  const [changelogs, setChangelogs] = useState<ChangelogEntry[]>([]);
-  const [project, setProject] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { project, loading: projectLoading } = useProject(params.slug);
+  const { changelogs, loading: changelogsLoading } = useChangelogs(
+    project?.id || null,
+    true // publishedOnly
+  );
 
-  useEffect(() => {
-    fetchData();
-  }, [params.slug]);
-
-  const fetchData = async () => {
-    try {
-      // Get all projects first
-      const projectsResponse = await fetch('/api/projects');
-      const projectsData = await projectsResponse.json();
-      
-      // Find the project by slug
-      const foundProject = projectsData.projects?.find((p: any) => 
-        p.slug === params.slug && p.isPublic
-      );
-      
-      if (!foundProject) {
-        setProject(null);
-        setLoading(false);
-        return;
-      }
-      
-      setProject(foundProject);
-      
-      // Fetch changelogs for this project
-      const changelogResponse = await fetch(`/api/changelog?projectId=${foundProject.id}`);
-      const changelogData = await changelogResponse.json();
-      
-      // Filter only published entries and convert them
-      const publishedEntries = (changelogData.changelogs || [])
-        .filter((cl: Changelog) => cl.published)
-        .map((cl: Changelog) => changelogToEntry(cl))
-        .sort((a: ChangelogEntry, b: ChangelogEntry) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      
-      setChangelogs(publishedEntries);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const loading = projectLoading || changelogsLoading;
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-[400px]">
-        <p className="text-sm text-gray-500">Loading...</p>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (!project) {
