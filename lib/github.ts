@@ -79,16 +79,19 @@ export async function fetchGitHubCommits(
   // 'since' is inclusive - commits after or equal to this time
   // 'until' is exclusive - commits before this time
   if (since) {
-    // Parse yyyy-MM-dd as local date at midnight
+    // Parse yyyy-MM-dd as local date at start of day
     const sinceDate = new Date(since + 'T00:00:00');
     console.log('Since date:', since, '->', sinceDate.toISOString());
     params.append('since', sinceDate.toISOString());
   }
   
   if (until) {
-    // Set to end of day (23:59:59.999) in local timezone to capture full day
+    // For 'until' date, we need to include the entire day in the user's timezone
+    // Parse the date and add 23:59:59.999 to get end of day
     const untilDate = new Date(until + 'T23:59:59.999');
-    console.log('Until date (end of day):', until, '->', untilDate.toISOString());
+    // Add a few hours to ensure we capture all commits for the day across timezones
+    untilDate.setHours(untilDate.getHours() + 3);
+    console.log('Until date (with buffer):', until, '->', untilDate.toISOString());
     params.append('until', untilDate.toISOString());
   }
   
