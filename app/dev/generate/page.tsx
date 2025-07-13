@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ChangelogForm from '@/components/ChangelogForm';
+import DateRangePicker from '@/components/DateRangePicker';
 import { GitCommit } from '@/lib/git';
 import { format, subDays } from 'date-fns';
 import { useProject } from '@/contexts/ProjectContext';
@@ -116,26 +117,14 @@ export default function GeneratePage() {
       </div>
 
       <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-6 mb-8">
-        <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">Date Range</h2>
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">From</label>
-            <input
-              type="date"
-              value={dateRange.since}
-              onChange={(e) => setDateRange({ ...dateRange, since: e.target.value })}
-              className="w-full px-3 py-2 text-sm rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">To</label>
-            <input
-              type="date"
-              value={dateRange.until}
-              onChange={(e) => setDateRange({ ...dateRange, until: e.target.value })}
-              className="w-full px-3 py-2 text-sm rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
-            />
-          </div>
+        <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">Select Date Range</h2>
+        <div className="mb-4">
+          <DateRangePicker
+            startDate={dateRange.since}
+            endDate={dateRange.until}
+            onStartDateChange={(date) => setDateRange({ ...dateRange, since: date })}
+            onEndDateChange={(date) => setDateRange({ ...dateRange, until: date })}
+          />
         </div>
         <button
           onClick={fetchCommits}

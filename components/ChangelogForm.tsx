@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { GitCommit } from '@/lib/git';
 import CommitList from './CommitList';
 import { format } from 'date-fns';
+import DatePicker from '@/components/DatePicker';
 
 interface ChangelogFormProps {
   commits: GitCommit[];
@@ -94,11 +95,9 @@ export default function ChangelogForm({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
-              <input
-                type="date"
+              <DatePicker
                 value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-800 rounded-md bg-white dark:bg-black focus:outline-none focus:ring-1 focus:ring-gray-900 dark:focus:ring-gray-100"
+                onChange={(date) => setDate(date)}
               />
             </div>
             

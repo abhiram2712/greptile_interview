@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
+import DatePicker from '@/components/DatePicker';
 import { useProject } from '@/contexts/ProjectContext';
 import { useToast } from '@/contexts/ToastContext';
 
@@ -102,11 +103,9 @@ export default function EditChangelogPage({ params }: PageProps) {
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Date
               </label>
-              <input
-                type="date"
+              <DatePicker
                 value={formData.date}
-                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                className="w-full px-3 py-2 text-sm rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+                onChange={(date) => setFormData({ ...formData, date })}
                 required
               />
             </div>
