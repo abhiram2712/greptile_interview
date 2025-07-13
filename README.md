@@ -7,159 +7,140 @@ A multi-project changelog generator that helps developers quickly create user-fr
 - 🚀 **Multi-Project Support**: Manage changelogs for multiple GitHub repositories in one place
 - 🤖 **AI-Powered Summarization**: Analyzes actual code changes (diffs) and repository context for accurate changelogs
 - 🔗 **GitHub Integration**: Works with any public GitHub repository - just paste the URL
-- 📅 **Date Range Selection**: Fetch commits from specific date ranges
+- 📅 **Date Range Selection**: Fetch commits from specific date ranges with proper timezone handling
 - ✅ **Interactive Commit Selection**: Choose which commits to include in your changelog
 - ✏️ **Full CRUD Operations**: Create, read, update, and delete changelogs
-- 🎨 **Clean, Minimalistic UI**: Inspired by Stripe and ChatGPT designs
+- 🎨 **Clean, Minimalistic UI**: Inspired by Stripe and modern SaaS designs
 - 💾 **Database Storage**: Uses Prisma ORM with SQLite (easily upgradeable to PostgreSQL)
 - 🚀 **Smart Caching**: Caches commit diffs and project context to minimize API calls
-- 📝 **Edit Changelogs**: Update existing changelogs with a dedicated edit interface
-- 🗑️ **Delete Changelogs**: Remove changelogs with confirmation dialog
+- 📝 **Rich Editing**: Full markdown support with live preview
+- 🌐 **Public Changelog Pages**: Share changelogs with customizable URLs
+- 🔄 **Project Summaries**: AI-generated project overviews with public visibility controls
 
-## Technical Decisions
+## Tech Stack
 
-### Why Next.js with App Router?
-- Modern React patterns with Server Components
-- Built-in API routes for backend functionality
-- Excellent TypeScript support
-- Easy deployment options
+**Next.js 14** (React) • **TypeScript** • **Tailwind CSS** • **Prisma ORM** • **SQLite** • **OpenAI API** • **GitHub API**
 
-### Why Prisma with SQLite?
-- Type-safe database queries with excellent TypeScript support
-- Easy to set up with SQLite for development
-- Seamlessly upgradeable to PostgreSQL for production
-- Stores commit diffs and project context for better AI generation
+## Quick Start
 
-### Why OpenAI for Summarization?
-- Best-in-class language model for technical writing
-- Understands developer terminology and conventions
-- Produces high-quality, user-friendly summaries
+### Prerequisites
+- Node.js 18+ installed
+- An OpenAI API key (required for changelog generation)
+- Git installed
 
-### Design Philosophy
-- **Minimalistic**: Focus on functionality over flashy design
-- **Developer-First**: Built for developers, by developers
-- **Efficient**: Quick to generate, easy to edit
-- **Flexible**: AI assists but doesn't restrict manual editing
+### Installation
 
-## Setup
-
-1. Clone the repository:
+1. **Clone the repository:**
 ```bash
 git clone <repository-url>
 cd greptile_interview
 ```
 
-2. Install dependencies:
+2. **Install dependencies:**
 ```bash
 npm install
 ```
 
-3. Create a `.env` file with your API keys:
+3. **Set up environment variables:**
 ```bash
-cp .env.example .env
-# Edit .env and add:
-# - OPENAI_API_KEY (required)
-# - GITHUB_TOKEN (optional, increases rate limits)
+# Create a .env file in the root directory
+cat > .env << EOF
+OPENAI_API_KEY=your_openai_api_key_here
+DATABASE_URL="file:./dev.db"
+EOF
 ```
 
-4. Set up the database:
+> **Note**: The `DATABASE_URL` is pre-configured for SQLite. No additional database setup required!
+> 
+> Optional: Add `GITHUB_TOKEN=ghp_...` to increase GitHub API rate limits.
+
+4. **Initialize the database:**
 ```bash
 npm run db:push
 ```
 
-5. Run the development server:
+5. **Start the development server:**
 ```bash
 npm run dev
 ```
 
-6. Open [http://localhost:3000](http://localhost:3000) in your browser
+6. **Open your browser:**
+Navigate to [http://localhost:3000](http://localhost:3000)
 
-## Usage
+That's it! You're ready to start generating changelogs.
 
-### Adding a Project
+## Technical & Product Decisions
 
-1. Click "+ Add Project" in the sidebar
-2. Paste a public GitHub repository URL (e.g., `https://github.com/facebook/react`)
-3. Click "Add" to add the project
+### Architecture Overview
 
-### Generating a Changelog
+We built a **modern Next.js application** with a focus on simplicity and maintainability:
 
-1. Select a project from the sidebar
-2. Navigate to `/generate` 
-3. Select a date range to fetch commits
-4. Click "Fetch Commits" to load commits from GitHub
-5. Select the commits you want to include in the changelog
-6. Click "Generate Changelog" to create an AI-powered summary
-7. Edit the generated content if needed
-8. Add version number, author name, and other details
-9. Click "Save Changelog" to publish
+- **Service-Oriented Design**: Business logic separated from API routes for better organization
+- **Type-Safe Throughout**: Full TypeScript coverage with strict typing
+- **Smart Data Management**: Efficient caching to minimize API calls and improve performance
+- **Component Reusability**: Custom hooks and shared components reduce code duplication
+- **Clean Separation**: Developer tools and public pages have distinct routing and experiences
 
-### Managing Changelogs
+### Product Decisions
 
-1. **View**: Select a project from the sidebar on the home page
-2. **Edit**: Hover over a changelog entry and click the pencil icon
-3. **Delete**: Hover over a changelog entry and click the trash icon
-4. **Details**: Click on any changelog to view the full formatted content
+#### Dual-View Architecture
+- **Developer View** (`/dev`): Full CRUD operations, draft/publish workflow
+- **Public View** (`/p/[slug]`): Clean, read-only changelog presentation
+- Separate routing ensures clear separation of concerns
 
-## Project Structure
+#### AI-Enhanced Features
+- **Context-Aware Generation**: AI analyzes repository structure, README, and tech stack
+- **Smart Summarization**: Groups related commits and identifies key changes
+- **Project Summaries**: Auto-generated overviews with manual editing capability
 
-```
-greptile_interview/
-├── app/                    # Next.js app directory
-│   ├── api/               # API routes
-│   │   ├── changelog/     # Changelog CRUD operations
-│   │   ├── commits/       # GitHub commit fetching
-│   │   └── projects/      # Project management
-│   ├── generate/          # Developer tool page
-│   └── page.tsx          # Public changelog page
-├── components/            # React components
-│   ├── ChangelogEntry.tsx # Display changelog entries
-│   ├── CommitList.tsx    # Commit selection UI
-│   ├── ChangelogForm.tsx # Changelog generation form
-│   ├── ProjectSidebar.tsx# Project selection sidebar
-│   └── LayoutWithSidebar.tsx # Layout wrapper
-├── lib/                   # Utility functions
-│   ├── github.ts         # GitHub API integration
-│   ├── ai.ts             # Basic OpenAI integration
-│   ├── ai-enhanced.ts    # Enhanced AI with code analysis
-│   ├── prisma.ts         # Database client
-│   └── types.ts          # TypeScript type definitions
-├── prisma/
-│   └── schema.prisma     # Database schema
-└── scripts/
-    └── migrate-to-db.ts  # Migration script from file storage
-```
+### Database Design
+- **Efficient Caching**: Stores commit diffs to minimize GitHub API calls
+- **Flexible Schema**: JSON fields for extensibility without migrations
+- **Relational Design**: Proper many-to-many relationships for commits and changelogs
 
-## API Endpoints
 
-### Projects
-- `GET /api/projects` - Get all projects
-- `POST /api/projects` - Add a new project (requires GitHub URL)
-- `DELETE /api/projects?id=ID` - Delete a project
+## Usage Guide
 
-### Commits
-- `GET /api/commits?projectId=ID&since=YYYY-MM-DD&until=YYYY-MM-DD` - Fetch GitHub commits
+### Getting Started
 
-### Changelogs
-- `GET /api/changelog?projectId=ID` - Get changelogs for a project
-- `POST /api/changelog` - Save a new changelog
-- `GET /api/changelog/[id]` - Get a specific changelog
-- `PUT /api/changelog/[id]` - Update a changelog
-- `DELETE /api/changelog/[id]` - Delete a changelog
-- `POST /api/changelog/generate` - Generate AI changelog summary with code analysis
+1. **Add Your First Project**
+   - Click the "+ Add Project" button in the sidebar
+   - Paste any public GitHub repository URL (e.g., `https://github.com/facebook/react`)
+   - The system will verify access and create the project
 
-### Additional Endpoints
-- `GET /api/commits/[sha]?projectId=ID` - Get detailed commit info with diff
-- `POST /api/projects/[id]/context` - Update project context (README, tech stack)
+2. **Generate Your First Changelog**
+   - Select your project from the sidebar
+   - Click "Generate New Changelog" 
+   - Select a date range to fetch commits
+   - Choose the commits you want to include
+   - Click "Generate with AI" to create a professional changelog
+   - Review, edit if needed, and save
 
-## Database Schema
+### Developer Workflow
 
-The application uses Prisma ORM with the following models:
-- **Project**: GitHub repository information
-- **Changelog**: Individual changelog entries
-- **Commit**: Git commits with diffs and file changes
-- **ProjectContext**: Repository metadata (README, tech stack, file structure)
-- **ChangelogCommit**: Many-to-many relation between changelogs and commits
+#### Creating Changelogs
+1. Navigate to the Generate page via the sidebar
+2. Select your date range (timezone-aware)
+3. Review and select relevant commits
+4. Generate AI summary with context-aware analysis
+5. Edit the markdown content with live preview
+6. Add metadata (version, author)
+7. Save as draft or publish immediately
+
+#### Managing Content
+- **Project Summary**: Auto-generated overview with visibility controls
+- **Changelog Entries**: Full CRUD with draft/publish workflow
+- **Public Pages**: Share at `/p/[project-slug]`
+- **Bulk Actions**: Publish/unpublish with one click
+
+### Public Changelog Pages
+
+Each project gets a unique public URL:
+- Format: `yoursite.com/p/[project-slug]`
+- Features clean, read-only presentation
+- Shows only published entries
+- Optional project summary section
+- Individual entry permalinks
 
 ## Future Enhancements
 
@@ -168,7 +149,7 @@ The application uses Prisma ORM with the following models:
 - **Webhook Integration**: Auto-generate changelogs on git push
 - **Custom AI Prompts**: Allow customization of AI generation prompts
 - **Version Detection**: Auto-detect version numbers from tags
-- **RSS Feed**: Provide RSS feed for changelog subscribers
+- **Chat Interface**: chat with AI to edit changelog content
 - **Private Repos**: Support for private GitHub repositories
 
 ## Contributing
@@ -178,3 +159,7 @@ Feel free to submit issues and enhancement requests!
 ## License
 
 MIT
+
+---
+
+*This project was built with the assistance of AI (Cursor).*
