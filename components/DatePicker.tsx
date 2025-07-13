@@ -19,8 +19,17 @@ export default function DatePicker({
   required = false
 }: DatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [currentMonth, setCurrentMonth] = useState(value ? new Date(value) : new Date());
-  const [inputValue, setInputValue] = useState(value ? format(new Date(value), 'MM/dd/yyyy') : '');
+  // Parse date strings as local dates to avoid timezone issues
+  const parseValueAsLocalDate = (val: string) => {
+    if (!val) return new Date();
+    // If it's a date-only string (yyyy-MM-dd), add local time
+    if (val.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      return new Date(val + 'T00:00:00');
+    }
+    return new Date(val);
+  };
+  const [currentMonth, setCurrentMonth] = useState(parseValueAsLocalDate(value));
+  const [inputValue, setInputValue] = useState(value ? format(parseValueAsLocalDate(value), 'MM/dd/yyyy') : '');
   const [error, setError] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -38,8 +47,8 @@ export default function DatePicker({
 
   useEffect(() => {
     if (value) {
-      setInputValue(format(new Date(value), 'MM/dd/yyyy'));
-      setCurrentMonth(new Date(value));
+      setInputValue(format(parseValueAsLocalDate(value), 'MM/dd/yyyy'));
+      setCurrentMonth(parseValueAsLocalDate(value));
     } else {
       setInputValue('');
     }
@@ -108,7 +117,7 @@ export default function DatePicker({
     const calendarEnd = endOfWeek(monthEnd);
     
     const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
-    const selectedDate = value ? new Date(value) : null;
+    const selectedDate = value ? parseValueAsLocalDate(value) : null;
 
     return (
       <div className="grid grid-cols-7 gap-0.5">

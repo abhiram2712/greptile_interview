@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import DatePicker from '@/components/DatePicker';
 import { useProject } from '@/contexts/ProjectContext';
 import { useToast } from '@/contexts/ToastContext';
+import { formatDateString } from '@/lib/date-utils';
 
 interface PageProps {
   params: {
@@ -41,8 +42,12 @@ export default function EditChangelogPage({ params }: PageProps) {
       const data = await response.json();
       const entry = data.entry;
       
+      // Extract just the date portion from the ISO string
+      // This avoids timezone conversion issues
+      const dateOnly = entry.date.split('T')[0];
+      
       setFormData({
-        date: format(new Date(entry.date), 'yyyy-MM-dd'),
+        date: dateOnly,
         version: entry.version || '',
         summary: entry.summary || '',
         content: entry.content || '',
