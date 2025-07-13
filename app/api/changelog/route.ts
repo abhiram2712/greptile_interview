@@ -26,6 +26,12 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// Helper function to clean summary text
+function cleanSummary(summary: string): string {
+  // Remove leading # symbols and whitespace
+  return summary.replace(/^#+\s*/, '').trim();
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -42,7 +48,7 @@ export async function POST(request: NextRequest) {
         projectId: body.projectId,
         date: body.date ? new Date(body.date) : new Date(),
         version: body.version || '',
-        summary: body.summary || '',
+        summary: cleanSummary(body.summary || ''),
         content: body.content || '',
         author: body.author || 'Unknown',
         published: false, // Start as draft

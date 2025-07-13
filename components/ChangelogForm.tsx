@@ -54,10 +54,13 @@ export default function ChangelogForm({
     const firstLine = lines[0] || '';
     const restContent = lines.slice(2).join('\n'); // Skip first line and blank line
     
+    // Clean the summary by removing leading # symbols
+    const cleanedFirstLine = firstLine.replace(/^#+\s*/, '').trim();
+    
     onSave({
       date,
       version,
-      summary: summary || firstLine,
+      summary: summary || cleanedFirstLine,
       content: summary ? finalContent : restContent, // If custom summary, keep full content
       commits: selectedCommits,
       author: author || 'AI Generated',

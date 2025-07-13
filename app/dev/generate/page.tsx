@@ -22,6 +22,22 @@ export default function GeneratePage() {
     until: format(new Date(), 'yyyy-MM-dd'),
   });
 
+  // Reset state when project changes
+  useEffect(() => {
+    if (selectedProjectId) {
+      // Reset all form state
+      setCommits([]);
+      setGeneratedContent('');
+      setIsGenerating(false);
+      setLoading(false);
+      // Reset date range to default
+      setDateRange({
+        since: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
+        until: format(new Date(), 'yyyy-MM-dd'),
+      });
+    }
+  }, [selectedProjectId]);
+
   const fetchCommits = async () => {
     if (!selectedProjectId) {
       console.error('No project selected');
@@ -137,6 +153,7 @@ export default function GeneratePage() {
 
       {commits.length > 0 && (
         <ChangelogForm
+          key={selectedProjectId} // Force remount when project changes
           commits={commits}
           onGenerate={handleGenerate}
           onSave={handleSave}
