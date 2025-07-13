@@ -1,8 +1,12 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { format, parse, isValid, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, isBefore, isAfter, subDays, startOfWeek, endOfWeek, addMonths, subMonths, isSameDay, setMonth, setYear, getYear } from 'date-fns';
-import { formatDateString } from '@/lib/date-utils';
+import { 
+  format, parse, isValid, startOfMonth, endOfMonth, eachDayOfInterval, 
+  isSameMonth, isToday, isBefore, isAfter, subDays, startOfWeek, 
+  endOfWeek, addMonths, subMonths, isSameDay, setMonth, setYear, getYear 
+} from 'date-fns';
+import { formatDateString, parseLocalDate } from '@/lib/date-utils';
 
 interface DateRangePickerProps {
   startDate: string;
@@ -28,14 +32,9 @@ export default function DateRangePicker({
   const [isOpen, setIsOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectingEndDate, setSelectingEndDate] = useState(false);
-  // Parse date string as local date to avoid timezone issues
-  const parseLocalDateString = (dateStr: string) => {
-    const [year, month, day] = dateStr.split('-').map(Number);
-    return new Date(year, month - 1, day);
-  };
   
-  const [startInputValue, setStartInputValue] = useState(format(parseLocalDateString(startDate), 'MM/dd/yyyy'));
-  const [endInputValue, setEndInputValue] = useState(format(parseLocalDateString(endDate), 'MM/dd/yyyy'));
+  const [startInputValue, setStartInputValue] = useState(format(parseLocalDate(startDate), 'MM/dd/yyyy'));
+  const [endInputValue, setEndInputValue] = useState(format(parseLocalDate(endDate), 'MM/dd/yyyy'));
   const [startError, setStartError] = useState('');
   const [endError, setEndError] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
@@ -52,8 +51,8 @@ export default function DateRangePicker({
   }, []);
 
   useEffect(() => {
-    setStartInputValue(format(parseLocalDateString(startDate), 'MM/dd/yyyy'));
-    setEndInputValue(format(parseLocalDateString(endDate), 'MM/dd/yyyy'));
+    setStartInputValue(format(parseLocalDate(startDate), 'MM/dd/yyyy'));
+    setEndInputValue(format(parseLocalDate(endDate), 'MM/dd/yyyy'));
   }, [startDate, endDate]);
 
   const parseDate = (value: string): Date | null => {
@@ -95,7 +94,7 @@ export default function DateRangePicker({
       setStartInputValue(format(date, 'MM/dd/yyyy')); // Normalize format
       
       // Check if it's after end date
-      const end = parseLocalDateString(endDate);
+      const end = parseLocalDate(endDate);
       if (isAfter(date, end)) {
         setStartError('Start date must be before end date');
       }
@@ -118,7 +117,7 @@ export default function DateRangePicker({
       setEndInputValue(format(date, 'MM/dd/yyyy')); // Normalize format
       
       // Check if it's before start date
-      const start = parseLocalDateString(startDate);
+      const start = parseLocalDate(startDate);
       if (isBefore(date, start)) {
         setEndError('End date must be after start date');
       }
@@ -159,13 +158,13 @@ export default function DateRangePicker({
       setStartError('');
       setSelectingEndDate(true);
     } else {
-      const start = parseLocalDateString(startDate);
+      const start = parseLocalDate(startDate);
       if (isBefore(date, start)) {
         // If end date is before start, swap them
         onStartDateChange(dateStr);
         onEndDateChange(startDate);
         setStartInputValue(formattedDate);
-        setEndInputValue(format(parseLocalDateString(startDate), 'MM/dd/yyyy'));
+        setEndInputValue(format(parseLocalDate(startDate), 'MM/dd/yyyy'));
       } else {
         onEndDateChange(dateStr);
         setEndInputValue(formattedDate);
@@ -183,8 +182,8 @@ export default function DateRangePicker({
     const calendarEnd = endOfWeek(monthEnd);
     
     const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
-    const start = parseLocalDateString(startDate);
-    const end = parseLocalDateString(endDate);
+    const start = parseLocalDate(startDate);
+    const end = parseLocalDate(endDate);
 
     return (
       <div className="grid grid-cols-7 gap-0.5">

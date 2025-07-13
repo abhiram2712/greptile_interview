@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangelogEntry as ChangelogEntryType } from '@/lib/storage';
+import { ChangelogEntry as ChangelogEntryType } from '@/lib/types';
 import { format } from 'date-fns';
 
 interface ChangelogEntryProps {

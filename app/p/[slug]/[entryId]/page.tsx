@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ChangelogEntry } from '@/lib/storage';
+import { ChangelogEntry } from '@/lib/types';
 import { format } from 'date-fns';
 import { notFound } from 'next/navigation';
 import ChangelogDetailView from '@/components/ChangelogDetailView';

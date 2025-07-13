@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangelogEntry } from '@/lib/storage';
+import { ChangelogEntry } from '@/lib/types';
 import { formatDisplayDate } from '@/lib/date-utils';
 import Link from 'next/link';
 

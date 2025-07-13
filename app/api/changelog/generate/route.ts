@@ -1,35 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateChangelogSummary } from '@/lib/ai';
-import { generateChangelogWithContext } from '@/lib/ai-enhanced';
-import { generateEnhancedChangelog, generateProjectSummary } from '@/lib/ai-changelog-v2';
 import { GitCommit } from '@/lib/git';
 import { prisma } from '@/lib/prisma';
 import { 
-  fetchCommitDetails,
   fetchRepositoryReadme,
-  fetchRepositoryStructure,
-  fetchFileContent
+  fetchRepositoryStructure
 } from '@/lib/github';
+import { detectTechStack } from '@/lib/tech-stack';
+import { aiChangelogService } from '@/lib/services/ai-service';
+import { commitService } from '@/lib/services/commit-service';
+import { createApiRoute, ApiError } from '@/lib/api-utils';
 
-export async function POST(request: NextRequest) {
-  try {
+export const POST = createApiRoute(async (request: NextRequest) => {
     const body = await request.json();
     const { commits, previousContext, projectId, useEnhanced = true, quickMode = false } = body;
 
     if (!commits || !Array.isArray(commits)) {
-      return NextResponse.json(
-        { error: 'Invalid commits data' },
-        { status: 400 }
-      );
+      throw new ApiError('Invalid commits data', 400);
     }
 
     // If no projectId, fall back to simple version
     if (!projectId) {
-      const summary = await generateChangelogSummary(
+      const result = await aiChangelogService.generateChangelog(
         commits as GitCommit[],
-        previousContext
+        null,
+        { quickMode: true, previousContext }
       );
-      return NextResponse.json({ summary });
+      return NextResponse.json({ summary: result.summary });
     }
 
     // Fetch project with context
@@ -39,96 +35,27 @@ export async function POST(request: NextRequest) {
     });
 
     if (!project) {
-      return NextResponse.json(
-        { error: 'Project not found' },
-        { status: 404 }
-      );
+      throw new ApiError('Project not found', 404);
     }
 
     // Quick mode: Skip fetching commit details for faster generation
     if (quickMode) {
-      const summary = await generateChangelogSummary(
+      const result = await aiChangelogService.generateChangelog(
         commits as GitCommit[],
-        previousContext
+        project.context,
+        { quickMode: true, previousContext }
       );
-      return NextResponse.json({ summary, content: summary });
+      return NextResponse.json({ summary: result.summary, content: result.content });
     }
 
-    // First, check which commits we already have in the database
-    const commitHashes = commits.slice(0, 5).map(c => c.hash); // Reduced from 10 to 5 for speed
-    const existingCommits = await prisma.commit.findMany({
-      where: {
-        projectId,
-        sha: { in: commitHashes },
-        diff: { not: null }, // Only get commits with diffs
-      },
-    });
-    
-    const existingCommitMap = new Map(existingCommits.map(c => [c.sha, c]));
-    const commitsToFetch = commits.slice(0, 5).filter(c => !existingCommitMap.has(c.hash));
-    
-    // Fetch missing commits in parallel with a limit
-    const fetchPromises = commitsToFetch.map(async (commit: GitCommit) => {
-      try {
-        const githubCommit = await fetchCommitDetails(
-          project.owner,
-          project.repo,
-          commit.hash
-        );
-
-        return prisma.commit.upsert({
-          where: {
-            projectId_sha: {
-              projectId,
-              sha: commit.hash,
-            },
-          },
-          update: {
-            diff: githubCommit.files?.map(f => f.patch).filter(Boolean).join('\n\n'),
-            filesChanged: githubCommit.files?.map(f => f.filename) || [],
-            additions: githubCommit.stats?.additions || 0,
-            deletions: githubCommit.stats?.deletions || 0,
-          },
-          create: {
-            projectId,
-            sha: commit.hash,
-            message: commit.message,
-            author: commit.author,
-            date: new Date(commit.date),
-            diff: githubCommit.files?.map(f => f.patch).filter(Boolean).join('\n\n'),
-            filesChanged: githubCommit.files?.map(f => f.filename) || [],
-            additions: githubCommit.stats?.additions || 0,
-            deletions: githubCommit.stats?.deletions || 0,
-          },
-        });
-      } catch (error) {
-        console.error(`Failed to fetch details for commit ${commit.hash}:`, error);
-        // Create basic commit without diff
-        return prisma.commit.upsert({
-          where: {
-            projectId_sha: {
-              projectId,
-              sha: commit.hash,
-            },
-          },
-          update: {},
-          create: {
-            projectId,
-            sha: commit.hash,
-            message: commit.message,
-            author: commit.author,
-            date: new Date(commit.date),
-          },
-        });
-      }
-    });
-    
-    const newCommits = await Promise.all(fetchPromises);
-    
-    // Combine existing and new commits in the correct order
-    const detailedCommits = commits.slice(0, 5).map(c => 
-      existingCommitMap.get(c.hash) || newCommits.find(nc => nc.sha === c.hash)
-    ).filter(Boolean);
+    // Use the commit service to get or fetch commits
+    const detailedCommits = await commitService.getOrFetchCommits(
+      projectId,
+      project.owner,
+      project.repo,
+      commits,
+      5
+    );
 
     // Check if context needs updating (older than 30 days or missing)
     const contextAge = project.context?.updatedAt 
@@ -152,7 +79,7 @@ export async function POST(request: NextRequest) {
         if (!summary && readme) {
           try {
             const tempContext = { readme, structure, techStack, projectId: '', id: '', updatedAt: new Date() };
-            summary = await generateProjectSummary(tempContext, readme);
+            summary = await aiChangelogService.generateProjectSummary(tempContext, readme);
           } catch (summaryError) {
             console.error('Error generating project summary:', summaryError);
             // Continue without summary
@@ -184,88 +111,21 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // Generate changelog based on the selected method
-    if (useEnhanced) {
-      const result = await generateEnhancedChangelog(
-        detailedCommits,
-        project.context,
+    // Generate changelog using the unified service
+    const result = await aiChangelogService.generateChangelog(
+      detailedCommits,
+      project.context,
+      {
+        useContext: useEnhanced,
         previousContext,
-        { includeProjectSummary: false } // We'll handle summary separately
-      );
-      
-      return NextResponse.json({ 
-        summary: result.summary,
-        content: result.content,
-        projectSummary: project.context?.summary 
-      });
-    } else {
-      // Fall back to original method
-      const summary = await generateChangelogWithContext(
-        detailedCommits,
-        project.context,
-        previousContext
-      );
-
-      return NextResponse.json({ summary });
-    }
-  } catch (error) {
-    console.error('Error generating changelog:', error);
-    return NextResponse.json(
-      { error: 'Failed to generate changelog summary' },
-      { status: 500 }
-    );
-  }
-}
-
-async function detectTechStack(owner: string, repo: string, structure: any[]) {
-  const techStack = {
-    languages: new Set<string>(),
-    frameworks: new Set<string>(),
-    tools: new Set<string>(),
-  };
-
-  // Check for package.json
-  const hasPackageJson = structure.some(f => f.name === 'package.json');
-  if (hasPackageJson) {
-    try {
-      const packageJsonContent = await fetchFileContent(owner, repo, 'package.json');
-      if (packageJsonContent) {
-        const packageJson = JSON.parse(packageJsonContent);
-        
-        // Detect frameworks
-        const deps = { ...packageJson.dependencies, ...packageJson.devDependencies };
-        if (deps.next) techStack.frameworks.add('Next.js');
-        if (deps.react) techStack.frameworks.add('React');
-        if (deps.vue) techStack.frameworks.add('Vue');
-        if (deps.express) techStack.frameworks.add('Express');
-        if (deps.typescript) techStack.languages.add('TypeScript');
-        if (deps.prisma) techStack.tools.add('Prisma');
-        if (deps.tailwindcss) techStack.frameworks.add('Tailwind CSS');
-        
-        techStack.languages.add('JavaScript');
+        includeProjectSummary: false
       }
-    } catch (e) {
-      console.error('Error parsing package.json:', e);
-    }
-  }
+    );
+    
+    return NextResponse.json({ 
+      summary: result.summary,
+      content: result.content,
+      projectSummary: project.context?.summary 
+    });
+});
 
-  // Check for other common files
-  if (structure.some(f => f.name === 'Cargo.toml')) {
-    techStack.languages.add('Rust');
-  }
-  if (structure.some(f => f.name === 'go.mod')) {
-    techStack.languages.add('Go');
-  }
-  if (structure.some(f => f.name === 'requirements.txt' || f.name === 'setup.py')) {
-    techStack.languages.add('Python');
-  }
-  if (structure.some(f => f.name === 'Gemfile')) {
-    techStack.languages.add('Ruby');
-  }
-
-  return {
-    languages: Array.from(techStack.languages),
-    frameworks: Array.from(techStack.frameworks),
-    tools: Array.from(techStack.tools),
-  };
-}

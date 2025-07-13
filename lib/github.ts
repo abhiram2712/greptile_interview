@@ -80,16 +80,15 @@ export async function fetchGitHubCommits(
   // 'until' is exclusive - commits before this time
   if (since) {
     // Parse yyyy-MM-dd as local date at midnight
-    const [year, month, day] = since.split('-').map(Number);
-    const sinceDate = new Date(year, month - 1, day, 0, 0, 0);
+    const sinceDate = new Date(since + 'T00:00:00');
     console.log('Since date:', since, '->', sinceDate.toISOString());
     params.append('since', sinceDate.toISOString());
   }
   
   if (until) {
-    // Parse yyyy-MM-dd as local date and add 1 day (since until is exclusive)
-    const [year, month, day] = until.split('-').map(Number);
-    const untilDate = new Date(year, month - 1, day + 1, 0, 0, 0);
+    // Add one day and create date at local midnight (since until is exclusive)
+    const untilDate = new Date(until + 'T00:00:00');
+    untilDate.setDate(untilDate.getDate() + 1);
     console.log('Until date (next day):', until, '->', untilDate.toISOString());
     params.append('until', untilDate.toISOString());
   }

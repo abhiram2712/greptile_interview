@@ -1,5 +1,20 @@
 import { Prisma } from '@prisma/client';
 
+// Properly typed interfaces for JSON fields
+export interface TechStack {
+  languages: string[];
+  frameworks: string[];
+  tools: string[];
+}
+
+export interface RepositoryFile {
+  name: string;
+  path: string;
+  type: 'file' | 'dir';
+  size?: number;
+  sha?: string;
+}
+
 // Re-export Prisma types for convenience
 export type Project = Prisma.ProjectGetPayload<{}>;
 export type Changelog = Prisma.ChangelogGetPayload<{}>;

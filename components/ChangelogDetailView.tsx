@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ChangelogEntry } from '@/lib/storage';
+import { ChangelogEntry } from '@/lib/types';
 import { formatDisplayDate } from '@/lib/date-utils';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';

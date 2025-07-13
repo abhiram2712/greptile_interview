@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChangelogEntry } from '@/lib/storage';
+import { ChangelogEntry } from '@/lib/types';
 import { formatDisplayDate } from '@/lib/date-utils';
 import ChangelogDetailView from '@/components/ChangelogDetailView';
 import { useToast } from '@/contexts/ToastContext';

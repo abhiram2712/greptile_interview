@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { 
   fetchRepositoryReadme, 
-  fetchRepositoryStructure, 
-  fetchFileContent 
+  fetchRepositoryStructure
 } from '@/lib/github';
+import { detectTechStack } from '@/lib/tech-stack';
 import { prisma } from '@/lib/prisma';
-import { generateProjectSummary } from '@/lib/ai-changelog-v2';
+import { aiChangelogService } from '@/lib/services/ai-service';
 
 export async function POST(
   request: NextRequest,
@@ -37,7 +37,7 @@ export async function POST(
         );
       }
 
-      const summary = await generateProjectSummary(project.context, project.context.readme || undefined);
+      const summary = await aiChangelogService.generateProjectSummary(project.context, project.context.readme || undefined);
       
       const updatedContext = await prisma.projectContext.update({
         where: { projectId: params.id },
@@ -75,7 +75,7 @@ export async function POST(
 
     // Generate summary
     const tempContext = { readme, structure, techStack, projectId: params.id, id: '', updatedAt: new Date() };
-    const summary = await generateProjectSummary(tempContext, readme);
+    const summary = await aiChangelogService.generateProjectSummary(tempContext, readme);
 
     // Update or create project context
     const context = await prisma.projectContext.upsert({
@@ -155,55 +155,3 @@ export async function PUT(
   }
 }
 
-async function detectTechStack(owner: string, repo: string, structure: any[]) {
-  const techStack = {
-    languages: new Set<string>(),
-    frameworks: new Set<string>(),
-    tools: new Set<string>(),
-  };
-
-  // Check for package.json
-  const hasPackageJson = structure.some(f => f.name === 'package.json');
-  if (hasPackageJson) {
-    try {
-      const packageJsonContent = await fetchFileContent(owner, repo, 'package.json');
-      if (packageJsonContent) {
-        const packageJson = JSON.parse(packageJsonContent);
-        
-        // Detect frameworks
-        const deps = { ...packageJson.dependencies, ...packageJson.devDependencies };
-        if (deps.next) techStack.frameworks.add('Next.js');
-        if (deps.react) techStack.frameworks.add('React');
-        if (deps.vue) techStack.frameworks.add('Vue');
-        if (deps.express) techStack.frameworks.add('Express');
-        if (deps.typescript) techStack.languages.add('TypeScript');
-        if (deps.prisma) techStack.tools.add('Prisma');
-        if (deps.tailwindcss) techStack.frameworks.add('Tailwind CSS');
-        
-        techStack.languages.add('JavaScript');
-      }
-    } catch (e) {
-      console.error('Error parsing package.json:', e);
-    }
-  }
-
-  // Check for other common files
-  if (structure.some(f => f.name === 'Cargo.toml')) {
-    techStack.languages.add('Rust');
-  }
-  if (structure.some(f => f.name === 'go.mod')) {
-    techStack.languages.add('Go');
-  }
-  if (structure.some(f => f.name === 'requirements.txt' || f.name === 'setup.py')) {
-    techStack.languages.add('Python');
-  }
-  if (structure.some(f => f.name === 'Gemfile')) {
-    techStack.languages.add('Ruby');
-  }
-
-  return {
-    languages: Array.from(techStack.languages),
-    frameworks: Array.from(techStack.frameworks),
-    tools: Array.from(techStack.tools),
-  };
-}
