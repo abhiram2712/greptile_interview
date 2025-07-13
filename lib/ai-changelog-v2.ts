@@ -126,7 +126,7 @@ ${c.diff && c.diff.length > 0 ? `**Key changes:**\n\`\`\`diff\n${c.diff.substrin
 `;
   }).join('\n---\n');
 
-  const prompt = `You are creating a professional changelog entry in the style of Stripe's documentation. Analyze these commits and create a comprehensive changelog.
+  const prompt = `You are creating a professional changelog entry in the style of Stripe's documentation. Analyze these commits and create a focused, developer-friendly changelog.
 
 ${contextSection}
 
@@ -141,54 +141,44 @@ Commit Analysis:
 
 ${commitDetails}
 
-Create a changelog with this EXACT structure:
+Create a changelog following this structure:
 
-1. TITLE: A clear, action-oriented title (e.g., "Enhanced Authentication with OAuth Support")
+# [Clear, action-oriented title describing the main change]
 
-2. VERSION & DATE: Include if available
+[2-3 sentence summary explaining what was changed and why it matters to developers]
 
-3. OVERVIEW: 2-3 sentences explaining the overall impact of these changes
+## What's new
+- [Concise bullet points of new features or capabilities]
+- [Focus on user-facing changes and benefits]
+- [Use inline code for method names, parameters, etc.]
 
-4. ## What's New
-Brief introduction followed by bullet points of new features/capabilities
+## Impact
+Explain who this affects and how they can benefit from these changes.
 
-5. ## Changes
-Organized by component or area:
-### [Component/Area Name]
-- Specific change with technical details
-- Include relevant code snippets where helpful
+## Changes
+[Group by component or logical area if multiple changes]
+- [Specific technical change with brief explanation]
+- [Include code snippets only if they clarify usage]
 
-6. ## Improvements
-Performance, developer experience, or other enhancements
+## Bug fixes (if any)
+- [Brief description of fixed issues]
 
-7. ## Bug Fixes
-List of resolved issues with brief descriptions
+## Breaking changes (if any)
+- [Clear description of what breaks and why]
 
-8. ## Breaking Changes (if any)
-Clear documentation of any breaking changes
+## Upgrade (if breaking changes)
+[Version-specific upgrade instructions if needed]
 
-9. ## Migration Guide (if needed)
-Step-by-step migration instructions
+Guidelines:
+- Use present tense ("adds" not "added")
+- Be concise - one line per change when possible  
+- Use inline \`code\` for technical terms
+- Only include code blocks if they demonstrate usage
+- Focus on what developers need to know
+- Omit sections that don't apply
 
-Use:
-- Clear, technical language
-- Code blocks with syntax highlighting
-- Specific component and API names
-- Present tense for current state
-- Links to related documentation (use placeholder [docs])
-
-Example snippet:
-### API Client
-- Added new \`createPaymentIntent\` method with enhanced error handling
-- Improved request retry logic with exponential backoff
-
-\`\`\`typescript
-const intent = await client.createPaymentIntent({
-  amount: 2000,
-  currency: 'usd',
-  payment_method_types: ['card', 'us_bank_account']
-});
-\`\`\``;
+Example of good style:
+"Adds support for webhook endpoint configuration. You can now configure multiple webhook endpoints with custom retry policies."`;
 
   try {
     const response = await openai.chat.completions.create({

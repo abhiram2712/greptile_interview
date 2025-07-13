@@ -22,6 +22,7 @@ export default function GeneratePage() {
     since: formatDateString(subDays(new Date(), 30)),
     until: formatDateString(new Date()),
   });
+  const [quickMode, setQuickMode] = useState(true); // Default to quick mode for speed
 
   // Reset state when project changes
   useEffect(() => {
@@ -82,7 +83,8 @@ export default function GeneratePage() {
         body: JSON.stringify({ 
           commits: selectedCommits,
           projectId: selectedProjectId,
-          useEnhanced: true
+          useEnhanced: true,
+          quickMode: quickMode
         }),
       });
       const data = await response.json();
@@ -142,6 +144,17 @@ export default function GeneratePage() {
             onStartDateChange={(date) => setDateRange({ ...dateRange, since: date })}
             onEndDateChange={(date) => setDateRange({ ...dateRange, until: date })}
           />
+        </div>
+        <div className="flex items-center justify-between mb-4">
+          <label className="flex items-center space-x-2 text-sm text-gray-700 dark:text-gray-300">
+            <input
+              type="checkbox"
+              checked={quickMode}
+              onChange={(e) => setQuickMode(e.target.checked)}
+              className="rounded border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100 focus:ring-gray-500"
+            />
+            <span>Quick mode (faster generation)</span>
+          </label>
         </div>
         <button
           onClick={fetchCommits}

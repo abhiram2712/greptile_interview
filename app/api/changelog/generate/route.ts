@@ -14,7 +14,7 @@ import {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { commits, previousContext, projectId, useEnhanced = true } = body;
+    const { commits, previousContext, projectId, useEnhanced = true, quickMode = false } = body;
 
     if (!commits || !Array.isArray(commits)) {
       return NextResponse.json(
@@ -45,83 +45,98 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch or create detailed commit information
-    const detailedCommits = await Promise.all(
-      commits.slice(0, 10).map(async (commit: GitCommit) => {
-        // Check if we already have this commit in the database
-        let dbCommit = await prisma.commit.findFirst({
+    // Quick mode: Skip fetching commit details for faster generation
+    if (quickMode) {
+      const summary = await generateChangelogSummary(
+        commits as GitCommit[],
+        previousContext
+      );
+      return NextResponse.json({ summary, content: summary });
+    }
+
+    // First, check which commits we already have in the database
+    const commitHashes = commits.slice(0, 5).map(c => c.hash); // Reduced from 10 to 5 for speed
+    const existingCommits = await prisma.commit.findMany({
+      where: {
+        projectId,
+        sha: { in: commitHashes },
+        diff: { not: null }, // Only get commits with diffs
+      },
+    });
+    
+    const existingCommitMap = new Map(existingCommits.map(c => [c.sha, c]));
+    const commitsToFetch = commits.slice(0, 5).filter(c => !existingCommitMap.has(c.hash));
+    
+    // Fetch missing commits in parallel with a limit
+    const fetchPromises = commitsToFetch.map(async (commit: GitCommit) => {
+      try {
+        const githubCommit = await fetchCommitDetails(
+          project.owner,
+          project.repo,
+          commit.hash
+        );
+
+        return prisma.commit.upsert({
           where: {
+            projectId_sha: {
+              projectId,
+              sha: commit.hash,
+            },
+          },
+          update: {
+            diff: githubCommit.files?.map(f => f.patch).filter(Boolean).join('\n\n'),
+            filesChanged: githubCommit.files?.map(f => f.filename) || [],
+            additions: githubCommit.stats?.additions || 0,
+            deletions: githubCommit.stats?.deletions || 0,
+          },
+          create: {
             projectId,
             sha: commit.hash,
+            message: commit.message,
+            author: commit.author,
+            date: new Date(commit.date),
+            diff: githubCommit.files?.map(f => f.patch).filter(Boolean).join('\n\n'),
+            filesChanged: githubCommit.files?.map(f => f.filename) || [],
+            additions: githubCommit.stats?.additions || 0,
+            deletions: githubCommit.stats?.deletions || 0,
           },
         });
+      } catch (error) {
+        console.error(`Failed to fetch details for commit ${commit.hash}:`, error);
+        // Create basic commit without diff
+        return prisma.commit.upsert({
+          where: {
+            projectId_sha: {
+              projectId,
+              sha: commit.hash,
+            },
+          },
+          update: {},
+          create: {
+            projectId,
+            sha: commit.hash,
+            message: commit.message,
+            author: commit.author,
+            date: new Date(commit.date),
+          },
+        });
+      }
+    });
+    
+    const newCommits = await Promise.all(fetchPromises);
+    
+    // Combine existing and new commits in the correct order
+    const detailedCommits = commits.slice(0, 5).map(c => 
+      existingCommitMap.get(c.hash) || newCommits.find(nc => nc.sha === c.hash)
+    ).filter(Boolean);
 
-        // If not, or if we don't have the diff, fetch from GitHub
-        if (!dbCommit || !dbCommit.diff) {
-          try {
-            const githubCommit = await fetchCommitDetails(
-              project.owner,
-              project.repo,
-              commit.hash
-            );
-
-            dbCommit = await prisma.commit.upsert({
-              where: {
-                projectId_sha: {
-                  projectId,
-                  sha: commit.hash,
-                },
-              },
-              update: {
-                diff: githubCommit.files?.map(f => f.patch).filter(Boolean).join('\n\n'),
-                filesChanged: githubCommit.files?.map(f => f.filename) || [],
-                additions: githubCommit.stats?.additions || 0,
-                deletions: githubCommit.stats?.deletions || 0,
-              },
-              create: {
-                projectId,
-                sha: commit.hash,
-                message: commit.message,
-                author: commit.author,
-                date: new Date(commit.date),
-                diff: githubCommit.files?.map(f => f.patch).filter(Boolean).join('\n\n'),
-                filesChanged: githubCommit.files?.map(f => f.filename) || [],
-                additions: githubCommit.stats?.additions || 0,
-                deletions: githubCommit.stats?.deletions || 0,
-              },
-            });
-          } catch (error) {
-            console.error(`Failed to fetch details for commit ${commit.hash}:`, error);
-            // Create basic commit without diff
-            dbCommit = await prisma.commit.upsert({
-              where: {
-                projectId_sha: {
-                  projectId,
-                  sha: commit.hash,
-                },
-              },
-              update: {},
-              create: {
-                projectId,
-                sha: commit.hash,
-                message: commit.message,
-                author: commit.author,
-                date: new Date(commit.date),
-              },
-            });
-          }
-        }
-
-        return dbCommit;
-      })
-    );
-
-    // Check if context needs updating (older than 7 days or missing)
+    // Check if context needs updating (older than 30 days or missing)
     const contextAge = project.context?.updatedAt 
       ? (Date.now() - new Date(project.context.updatedAt).getTime()) / (1000 * 60 * 60 * 24)
       : Infinity;
     
-    if (!project.context || contextAge > 7 || !project.context.summary) {
+    // Only update context if it's really old or missing key data
+    if (!project.context || contextAge > 30 || (!project.context.summary && !project.context.readme)) {
       try {
         // Fetch README
         const readme = await fetchRepositoryReadme(project.owner, project.repo);

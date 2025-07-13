@@ -15,35 +15,49 @@ export async function generateChangelogSummary(
 
   const commitMessages = commits.map(c => `- ${c.message} (by ${c.author})`).join('\n');
 
-  const prompt = `You are a technical writer creating a changelog for developer tools. Analyze these git commits and create a user-friendly changelog summary.
+  const prompt = `You are a technical writer creating a changelog in the style of Stripe's documentation. Analyze these git commits and create a concise, developer-friendly changelog.
 
 ${previousContext ? `Previous context: ${previousContext}\n` : ''}
 
 Git commits:
 ${commitMessages}
 
-Create a changelog entry with:
-1. FIRST LINE: A single, concise summary sentence (max 80 characters) that captures the main change
-2. BLANK LINE
-3. Detailed changes organized by category (### Added, ### Changed, ### Fixed, ### Removed)
-4. Focus on user-facing changes, not internal refactoring
-5. Use clear, concise language
-6. Group related changes together
+Create a changelog following this structure:
 
-Example format:
-Improved authentication flow and added OAuth support
+# [Clear, action-oriented title]
 
-### Added
-- OAuth 2.0 support for Google and GitHub
-- Remember me functionality
+[1-2 sentence summary explaining what changed and why it matters]
 
-### Changed
-- Streamlined login process
-- Updated password requirements
+## What's new
+- [Bullet points of new features/capabilities]
+- [Use inline \`code\` for technical terms]
 
-### Fixed
-- Session timeout issues
-- Email validation bugs`;
+## Changes
+- [Technical changes grouped logically]
+- [Be specific but concise]
+
+## Bug fixes (if any)
+- [Fixed issues with brief descriptions]
+
+Guidelines:
+- Use present tense ("adds" not "added")
+- Focus on what developers need to know
+- Omit empty sections
+- Be concise - one line per change when possible
+
+Example:
+# Adds flexible webhook retry configuration
+
+You can now configure custom retry policies for webhook endpoints. This allows better handling of transient failures and reduces unnecessary retries.
+
+## What's new
+- Custom retry policies with exponential backoff
+- Per-endpoint timeout configuration
+- New \`webhook.retry\` API methods
+
+## Changes
+- Default retry attempts increased from 3 to 5
+- Webhook logs now include retry attempt number`;
 
   try {
     const response = await openai.chat.completions.create({
