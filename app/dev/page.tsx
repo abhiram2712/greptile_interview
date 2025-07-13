@@ -235,27 +235,9 @@ export default function Home() {
                 >
                   <div className="flex items-baseline justify-between">
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 group-hover:text-gray-700 dark:group-hover:text-gray-300">
+                      <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 group-hover:text-gray-700 dark:group-hover:text-gray-300 truncate">
                         Project Summary
                       </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 overflow-hidden" style={{ 
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden'
-                      }}>
-                        {regeneratingSummary ? (
-                          <span className="text-gray-500 italic">Regenerating summary with AI...</span>
-                        ) : currentProject?.context?.status === 'indexing' ? (
-                          <span className="text-gray-500 italic">Indexing codebase...</span>
-                        ) : currentProject?.context?.status === 'pending' ? (
-                          <span className="text-gray-500 italic">Waiting to index codebase...</span>
-                        ) : currentProject?.context?.status === 'failed' ? (
-                          <span className="text-red-500 italic">Failed to index codebase. Click to retry.</span>
-                        ) : (
-                          currentProject?.context?.summary || 'No summary available. Click to add one.'
-                        )}
-                      </p>
                     </div>
                     <div className="ml-4 flex items-center space-x-4 text-sm text-gray-500">
                       <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 rounded">

@@ -67,7 +67,7 @@ export default function ChangelogListView({
                 >
                   <div className="flex items-baseline justify-between">
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 group-hover:text-gray-700 dark:group-hover:text-gray-300">
+                      <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 group-hover:text-gray-700 dark:group-hover:text-gray-300 truncate">
                         {entry.summary || 'Changelog Update'}
                       </h3>
                     </div>
