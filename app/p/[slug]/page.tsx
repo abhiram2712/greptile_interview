@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { changelogToEntry, Changelog, ChangelogEntry } from '@/lib/types';
 import { notFound } from 'next/navigation';
 import ChangelogListView from '@/components/ChangelogListView';
-import { format } from 'date-fns';
+import { formatDisplayDate } from '@/lib/date-utils';
 import Link from 'next/link';
 
 interface PageProps {
@@ -121,7 +121,7 @@ export default function PublicChangelogPage({ params }: PageProps) {
                     <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-6">
                       {/* Date */}
                       <time className="flex-shrink-0 text-sm font-medium text-gray-500 dark:text-gray-400 sm:pt-1 sm:w-32">
-                        {format(new Date(entry.date), 'MMM d, yyyy')}
+                        {formatDisplayDate(entry.date)}
                       </time>
                       
                       {/* Content */}

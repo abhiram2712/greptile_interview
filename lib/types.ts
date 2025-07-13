@@ -39,12 +39,21 @@ export interface ChangelogEntry {
 
 // Transform functions
 export function changelogToEntry(changelog: any): ChangelogEntry {
+  // Helper to format date without timezone conversion
+  const formatLocalDate = (date: Date | string) => {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   return {
     id: changelog.id,
     projectId: changelog.projectId,
     date: typeof changelog.date === 'string' 
       ? changelog.date.split('T')[0] 
-      : new Date(changelog.date).toISOString().split('T')[0],
+      : formatLocalDate(changelog.date),
     version: changelog.version || undefined,
     summary: changelog.summary,
     content: changelog.content,

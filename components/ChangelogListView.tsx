@@ -1,7 +1,7 @@
 'use client';
 
 import { ChangelogEntry } from '@/lib/storage';
-import { format } from 'date-fns';
+import { formatDisplayDate } from '@/lib/date-utils';
 import Link from 'next/link';
 
 interface ChangelogListViewProps {
@@ -77,7 +77,7 @@ export default function ChangelogListView({
                           v{entry.version}
                         </span>
                       )}
-                      <time>{format(new Date(entry.date), 'MMM d, yyyy')}</time>
+                      <time>{formatDisplayDate(entry.date)}</time>
                       {!isPublicView && (
                         <span className={`text-xs px-2 py-0.5 rounded ${
                           entry.published 

@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     const entry = await prisma.changelog.create({
       data: {
         projectId: body.projectId,
-        date: body.date ? new Date(body.date) : new Date(),
+        date: body.date ? new Date(body.date + 'T00:00:00') : new Date(),
         version: body.version || '',
         summary: cleanSummary(body.summary || ''),
         content: body.content || '',

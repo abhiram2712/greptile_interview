@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { ChangelogEntry } from '@/lib/storage';
-import { format } from 'date-fns';
+import { formatDisplayDate } from '@/lib/date-utils';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -63,7 +63,7 @@ export default function ChangelogDetailView({
           </div>
           
           <div className="flex items-center space-x-4 text-sm text-gray-500">
-            <time>{format(new Date(entry.date), 'MMMM d, yyyy')}</time>
+            <time>{formatDisplayDate(entry.date, 'MMMM d, yyyy')}</time>
             <span>•</span>
             <span>{entry.author}</span>
             <span>•</span>

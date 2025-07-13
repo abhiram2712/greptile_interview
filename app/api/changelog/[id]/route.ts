@@ -56,17 +56,34 @@ export async function PUT(
       );
     }
     
+    // Build update data object to only update provided fields
+    const updateData: any = {};
+    
+    if (body.date !== undefined) {
+      // Parse the date string and add time to ensure it's treated as local midnight
+      // This prevents timezone shifts
+      updateData.date = new Date(body.date + 'T00:00:00');
+    }
+    if (body.version !== undefined) {
+      updateData.version = body.version;
+    }
+    if (body.summary !== undefined) {
+      updateData.summary = cleanSummary(body.summary);
+    }
+    if (body.content !== undefined) {
+      updateData.content = body.content;
+    }
+    if (body.author !== undefined) {
+      updateData.author = body.author;
+    }
+    if (body.published !== undefined) {
+      updateData.published = body.published;
+    }
+    
     // Update the changelog
     const updated = await prisma.changelog.update({
       where: { id: params.id },
-      data: {
-        date: body.date ? new Date(body.date) : undefined,
-        version: body.version,
-        summary: body.summary ? cleanSummary(body.summary) : undefined,
-        content: body.content,
-        author: body.author,
-        published: body.published !== undefined ? body.published : undefined,
-      },
+      data: updateData,
     });
     
     return NextResponse.json({ entry: updated });
