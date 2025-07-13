@@ -1,15 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { ChangelogEntry } from '@/lib/storage';
-import { format } from 'date-fns';
+import { formatDisplayDate } from '@/lib/date-utils';
 import ChangelogDetailView from '@/components/ChangelogDetailView';
+import { useToast } from '@/contexts/ToastContext';
 
 export default function ChangelogDetailPage({ 
   params 
 }: { 
   params: { projectId: string; entryId: string } 
 }) {
+  const router = useRouter();
+  const { showSuccess, showError } = useToast();
   const [entry, setEntry] = useState<ChangelogEntry | null>(null);
   const [projectName, setProjectName] = useState<string>('');
   const [loading, setLoading] = useState(true);
@@ -39,6 +43,47 @@ export default function ChangelogDetailPage({
     }
   };
 
+  const handleDelete = async () => {
+    if (!confirm('Are you sure you want to delete this changelog entry?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/changelog/${params.entryId}`, { method: 'DELETE' });
+      if (response.ok) {
+        showSuccess('Changelog entry deleted successfully');
+        router.push('/dev');
+      } else {
+        const error = await response.json();
+        showError(error.error || 'Failed to delete changelog');
+      }
+    } catch (error) {
+      console.error('Error deleting changelog:', error);
+      showError('Failed to delete changelog');
+    }
+  };
+
+  const handleTogglePublish = async (published: boolean) => {
+    try {
+      const response = await fetch(`/api/changelog/${params.entryId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ published }),
+      });
+      
+      if (response.ok) {
+        showSuccess(`Changelog ${published ? 'published' : 'unpublished'} successfully`);
+        await fetchData(); // Refresh the data
+      } else {
+        const error = await response.json();
+        showError(error.error || 'Failed to update changelog');
+      }
+    } catch (error) {
+      console.error('Error updating changelog:', error);
+      showError('Failed to update changelog');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -59,12 +104,16 @@ export default function ChangelogDetailPage({
     <ChangelogDetailView
       entry={entry}
       projectName={projectName}
-      backLink="/"
+      backLink="/dev"
       breadcrumbs={[
-        { label: 'Changelog', href: '/' },
-        { label: projectName, href: `/?project=${params.projectId}` },
-        { label: format(new Date(entry.date), 'yyyy-MM-dd') }
+        { label: 'Changelog', href: '/dev' },
+        { label: projectName, href: '/dev' },
+        { label: formatDisplayDate(entry.date, 'yyyy-MM-dd') }
       ]}
+      isDevView={true}
+      onDelete={handleDelete}
+      onTogglePublish={handleTogglePublish}
+      editLink={`/dev/changelog/${params.projectId}/${params.entryId}/edit`}
     />
   );
 }

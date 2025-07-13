@@ -16,6 +16,10 @@ interface ChangelogDetailViewProps {
     label: string;
     href?: string;
   }>;
+  isDevView?: boolean;
+  onDelete?: () => void;
+  onTogglePublish?: (published: boolean) => void;
+  editLink?: string;
 }
 
 export default function ChangelogDetailView({ 
@@ -23,7 +27,11 @@ export default function ChangelogDetailView({
   projectName, 
   backLink,
   backLinkText = 'Back to changelog',
-  breadcrumbs 
+  breadcrumbs,
+  isDevView = false,
+  onDelete,
+  onTogglePublish,
+  editLink
 }: ChangelogDetailViewProps) {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950">
@@ -62,12 +70,53 @@ export default function ChangelogDetailView({
             )}
           </div>
           
-          <div className="flex items-center space-x-4 text-sm text-gray-500">
-            <time>{formatDisplayDate(entry.date, 'MMMM d, yyyy')}</time>
-            <span>•</span>
-            <span>{entry.author}</span>
-            <span>•</span>
-            <span>{entry.commits.length} commits</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4 text-sm text-gray-500">
+              <time>{formatDisplayDate(entry.date, 'MMMM d, yyyy')}</time>
+              <span>•</span>
+              <span>{entry.author}</span>
+              <span>•</span>
+              <span>{entry.commits.length} commits</span>
+            </div>
+            
+            {isDevView && (
+              <div className="flex items-center space-x-2">
+                <span className={`text-xs px-2 py-0.5 rounded ${
+                  entry.published 
+                    ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' 
+                    : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300'
+                }`}>
+                  {entry.published ? 'Published' : 'Draft'}
+                </span>
+                
+                {onTogglePublish && (
+                  <button
+                    onClick={() => onTogglePublish(!entry.published)}
+                    className="px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    {entry.published ? 'Unpublish' : 'Publish'}
+                  </button>
+                )}
+                
+                {editLink && (
+                  <Link
+                    href={editLink}
+                    className="px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    Edit
+                  </Link>
+                )}
+                
+                {onDelete && (
+                  <button
+                    onClick={onDelete}
+                    className="px-3 py-1 text-xs font-medium text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-900 rounded-md hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
+                  >
+                    Delete
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </header>
 
