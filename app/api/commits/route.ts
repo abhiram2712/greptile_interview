@@ -9,7 +9,6 @@ export async function GET(request: NextRequest) {
     const since = searchParams.get('since') || undefined;
     const until = searchParams.get('until') || undefined;
 
-    console.log('Commits API called with:', { projectId, since, until });
 
     if (!projectId) {
       return NextResponse.json(
@@ -21,7 +20,6 @@ export async function GET(request: NextRequest) {
     const project = await prisma.project.findUnique({
       where: { id: projectId },
     });
-    console.log('Found project:', project);
     
     if (!project) {
       return NextResponse.json(
@@ -30,7 +28,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log('Fetching GitHub commits for:', project.owner, project.repo);
     const githubCommits = await fetchGitHubCommits(
       project.owner,
       project.repo,
@@ -38,7 +35,6 @@ export async function GET(request: NextRequest) {
       until
     );
 
-    console.log('Received commits from GitHub:', githubCommits.length);
     const commits = githubCommits.map(transformGitHubCommit);
 
     return NextResponse.json({ commits });

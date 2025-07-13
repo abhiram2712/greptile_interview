@@ -81,22 +81,20 @@ export async function fetchGitHubCommits(
   if (since) {
     // Parse yyyy-MM-dd as local date at start of day
     const sinceDate = new Date(since + 'T00:00:00');
-    console.log('Since date:', since, '->', sinceDate.toISOString());
     params.append('since', sinceDate.toISOString());
   }
   
   if (until) {
-    // For 'until' date, we need to include the entire day in the user's timezone
-    // Parse the date and add 23:59:59.999 to get end of day
-    const untilDate = new Date(until + 'T23:59:59.999');
-    // Add a few hours to ensure we capture all commits for the day across timezones
-    untilDate.setHours(untilDate.getHours() + 3);
-    console.log('Until date (with buffer):', until, '->', untilDate.toISOString());
+    // For 'until' date, we need to include the entire day in all timezones
+    // Parse as UTC midnight and add 32 hours to cover all timezone differences
+    // This ensures we get commits from the entire selected day regardless of user timezone
+    const untilDate = new Date(until + 'T00:00:00Z'); // Force UTC
+    // Add 32 hours (24 hours + 8 hours for PST offset) to ensure full coverage
+    untilDate.setUTCHours(untilDate.getUTCHours() + 32);
     params.append('until', untilDate.toISOString());
   }
   
   const url = `https://api.github.com/repos/${owner}/${repo}/commits?${params}`;
-  console.log('GitHub API URL:', url);
   
   const response = await fetch(url, {
     headers: {

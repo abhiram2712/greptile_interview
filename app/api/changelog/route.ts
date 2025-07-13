@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { cleanSummary } from '@/lib/text-utils';
 
 export async function GET(request: NextRequest) {
   try {
@@ -24,12 +25,6 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-// Helper function to clean summary text
-function cleanSummary(summary: string): string {
-  // Remove leading # symbols and whitespace
-  return summary.replace(/^#+\s*/, '').trim();
 }
 
 export async function POST(request: NextRequest) {

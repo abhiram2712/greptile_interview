@@ -9,6 +9,7 @@ import { detectTechStack } from '@/lib/tech-stack';
 import { aiChangelogService } from '@/lib/services/ai-service';
 import { commitService } from '@/lib/services/commit-service';
 import { createApiRoute, ApiError } from '@/lib/api-utils';
+import { cleanSummary } from '@/lib/text-utils';
 
 export const POST = createApiRoute(async (request: NextRequest) => {
     const body = await request.json();
@@ -25,7 +26,7 @@ export const POST = createApiRoute(async (request: NextRequest) => {
         null,
         { previousContext }
       );
-      return NextResponse.json({ summary: result.summary });
+      return NextResponse.json({ summary: cleanSummary(result.summary) });
     }
 
     // Fetch project with context
@@ -113,7 +114,7 @@ export const POST = createApiRoute(async (request: NextRequest) => {
     );
     
     return NextResponse.json({ 
-      summary: result.summary,
+      summary: cleanSummary(result.summary),
       content: result.content,
       projectSummary: project.context?.summary 
     });

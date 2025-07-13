@@ -1,17 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-
-// Helper function to clean summary text
-function cleanSummary(summary: string): string {
-  // Remove leading # symbols and whitespace
-  return summary.replace(/^#+\s*/, '').trim();
-}
+import { cleanSummary } from '@/lib/text-utils';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const searchParams = request.nextUrl.searchParams;
+    const projectId = searchParams.get('projectId');
+    
     const entry = await prisma.changelog.findUnique({
       where: { id: params.id },
       include: {
@@ -21,6 +19,14 @@ export async function GET(
     });
     
     if (!entry) {
+      return NextResponse.json(
+        { error: 'Changelog entry not found' },
+        { status: 404 }
+      );
+    }
+    
+    // Validate project ID if provided
+    if (projectId && entry.projectId !== projectId) {
       return NextResponse.json(
         { error: 'Changelog entry not found' },
         { status: 404 }
