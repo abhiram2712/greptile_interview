@@ -79,18 +79,18 @@ export async function fetchGitHubCommits(
   // 'since' is inclusive - commits after or equal to this time
   // 'until' is exclusive - commits before this time
   if (since) {
-    const sinceDate = new Date(since);
-    sinceDate.setHours(0, 0, 0, 0);
+    // Parse yyyy-MM-dd as local date at midnight
+    const [year, month, day] = since.split('-').map(Number);
+    const sinceDate = new Date(year, month - 1, day, 0, 0, 0);
+    console.log('Since date:', since, '->', sinceDate.toISOString());
     params.append('since', sinceDate.toISOString());
   }
   
   if (until) {
-    // Add 1 day to include commits from the 'until' date
-    // Parse the date string and add time to ensure we get the right date
+    // Parse yyyy-MM-dd as local date and add 1 day (since until is exclusive)
     const [year, month, day] = until.split('-').map(Number);
-    const untilDate = new Date(year, month - 1, day + 1, 0, 0, 0, 0);
-    console.log('Original until date:', until);
-    console.log('Adjusted until date (should be next day):', untilDate.toISOString());
+    const untilDate = new Date(year, month - 1, day + 1, 0, 0, 0);
+    console.log('Until date (next day):', until, '->', untilDate.toISOString());
     params.append('until', untilDate.toISOString());
   }
   

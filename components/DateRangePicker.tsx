@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { format, parse, isValid, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, isBefore, isAfter, subDays, startOfWeek, endOfWeek, addMonths, subMonths, isSameDay, setMonth, setYear, getYear } from 'date-fns';
+import { formatDateString } from '@/lib/date-utils';
 
 interface DateRangePickerProps {
   startDate: string;
@@ -27,8 +28,14 @@ export default function DateRangePicker({
   const [isOpen, setIsOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectingEndDate, setSelectingEndDate] = useState(false);
-  const [startInputValue, setStartInputValue] = useState(format(new Date(startDate), 'MM/dd/yyyy'));
-  const [endInputValue, setEndInputValue] = useState(format(new Date(endDate), 'MM/dd/yyyy'));
+  // Parse date string as local date to avoid timezone issues
+  const parseLocalDateString = (dateStr: string) => {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  };
+  
+  const [startInputValue, setStartInputValue] = useState(format(parseLocalDateString(startDate), 'MM/dd/yyyy'));
+  const [endInputValue, setEndInputValue] = useState(format(parseLocalDateString(endDate), 'MM/dd/yyyy'));
   const [startError, setStartError] = useState('');
   const [endError, setEndError] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
@@ -45,8 +52,8 @@ export default function DateRangePicker({
   }, []);
 
   useEffect(() => {
-    setStartInputValue(format(new Date(startDate), 'MM/dd/yyyy'));
-    setEndInputValue(format(new Date(endDate), 'MM/dd/yyyy'));
+    setStartInputValue(format(parseLocalDateString(startDate), 'MM/dd/yyyy'));
+    setEndInputValue(format(parseLocalDateString(endDate), 'MM/dd/yyyy'));
   }, [startDate, endDate]);
 
   const parseDate = (value: string): Date | null => {
@@ -83,12 +90,12 @@ export default function DateRangePicker({
       // Don't revert the value immediately, let user fix it
     } else {
       // Valid date, update the actual date
-      onStartDateChange(format(date, 'yyyy-MM-dd'));
+      onStartDateChange(formatDateString(date));
       setCurrentMonth(date);
       setStartInputValue(format(date, 'MM/dd/yyyy')); // Normalize format
       
       // Check if it's after end date
-      const end = new Date(endDate);
+      const end = parseLocalDateString(endDate);
       if (isAfter(date, end)) {
         setStartError('Start date must be before end date');
       }
@@ -107,11 +114,11 @@ export default function DateRangePicker({
       // Don't revert the value immediately, let user fix it
     } else {
       // Valid date, update the actual date
-      onEndDateChange(format(date, 'yyyy-MM-dd'));
+      onEndDateChange(formatDateString(date));
       setEndInputValue(format(date, 'MM/dd/yyyy')); // Normalize format
       
       // Check if it's before start date
-      const start = new Date(startDate);
+      const start = parseLocalDateString(startDate);
       if (isBefore(date, start)) {
         setEndError('End date must be after start date');
       }
@@ -133,8 +140,8 @@ export default function DateRangePicker({
   const handlePreset = (days: number) => {
     const end = new Date();
     const start = subDays(end, days);
-    onStartDateChange(format(start, 'yyyy-MM-dd'));
-    onEndDateChange(format(end, 'yyyy-MM-dd'));
+    onStartDateChange(formatDateString(start));
+    onEndDateChange(formatDateString(end));
     setStartInputValue(format(start, 'MM/dd/yyyy'));
     setEndInputValue(format(end, 'MM/dd/yyyy'));
     setStartError('');
@@ -143,7 +150,7 @@ export default function DateRangePicker({
   };
 
   const handleDateClick = (date: Date) => {
-    const dateStr = format(date, 'yyyy-MM-dd');
+    const dateStr = formatDateString(date);
     const formattedDate = format(date, 'MM/dd/yyyy');
     
     if (!selectingEndDate) {
@@ -152,13 +159,13 @@ export default function DateRangePicker({
       setStartError('');
       setSelectingEndDate(true);
     } else {
-      const start = new Date(startDate);
+      const start = parseLocalDateString(startDate);
       if (isBefore(date, start)) {
         // If end date is before start, swap them
         onStartDateChange(dateStr);
         onEndDateChange(startDate);
         setStartInputValue(formattedDate);
-        setEndInputValue(format(new Date(startDate), 'MM/dd/yyyy'));
+        setEndInputValue(format(parseLocalDateString(startDate), 'MM/dd/yyyy'));
       } else {
         onEndDateChange(dateStr);
         setEndInputValue(formattedDate);
@@ -176,8 +183,8 @@ export default function DateRangePicker({
     const calendarEnd = endOfWeek(monthEnd);
     
     const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    const start = parseLocalDateString(startDate);
+    const end = parseLocalDateString(endDate);
 
     return (
       <div className="grid grid-cols-7 gap-0.5">

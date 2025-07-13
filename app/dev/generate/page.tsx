@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import ChangelogForm from '@/components/ChangelogForm';
 import DateRangePicker from '@/components/DateRangePicker';
 import { GitCommit } from '@/lib/git';
-import { format, subDays } from 'date-fns';
+import { subDays, format } from 'date-fns';
+import { formatDateString } from '@/lib/date-utils';
 import { useProject } from '@/contexts/ProjectContext';
 import { useToast } from '@/contexts/ToastContext';
 
@@ -18,8 +19,8 @@ export default function GeneratePage() {
   const [generatedContent, setGeneratedContent] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [dateRange, setDateRange] = useState({
-    since: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
-    until: format(new Date(), 'yyyy-MM-dd'),
+    since: formatDateString(subDays(new Date(), 30)),
+    until: formatDateString(new Date()),
   });
 
   // Reset state when project changes
@@ -32,8 +33,8 @@ export default function GeneratePage() {
       setLoading(false);
       // Reset date range to default
       setDateRange({
-        since: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
-        until: format(new Date(), 'yyyy-MM-dd'),
+        since: formatDateString(subDays(new Date(), 30)),
+        until: formatDateString(new Date()),
       });
     }
   }, [selectedProjectId]);
