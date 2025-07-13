@@ -82,8 +82,7 @@ export default function GeneratePage() {
         body: JSON.stringify({ 
           commits: selectedCommits,
           projectId: selectedProjectId,
-          useEnhanced: true,
-          quickMode: quickMode
+          useEnhanced: true
         }),
       });
       const data = await response.json();
