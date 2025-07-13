@@ -18,7 +18,6 @@ interface CommitWithDiff {
 interface ChangelogOptions {
   useContext?: boolean;
   includeProjectSummary?: boolean;
-  quickMode?: boolean;
   previousContext?: string;
 }
 
@@ -52,7 +51,7 @@ export class AIChangelogService {
     projectContext?: ProjectContext | null,
     options: ChangelogOptions = {}
   ): Promise<ChangelogResult> {
-    if (options.quickMode || !projectContext) {
+    if (!projectContext) {
       const summary = await this.generateQuickChangelog(
         commits as GitCommit[],
         options.previousContext

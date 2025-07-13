@@ -12,7 +12,7 @@ import { createApiRoute, ApiError } from '@/lib/api-utils';
 
 export const POST = createApiRoute(async (request: NextRequest) => {
     const body = await request.json();
-    const { commits, previousContext, projectId, useEnhanced = true, quickMode = false } = body;
+    const { commits, previousContext, projectId, useEnhanced = true } = body;
 
     if (!commits || !Array.isArray(commits)) {
       throw new ApiError('Invalid commits data', 400);
@@ -23,7 +23,7 @@ export const POST = createApiRoute(async (request: NextRequest) => {
       const result = await aiChangelogService.generateChangelog(
         commits as GitCommit[],
         null,
-        { quickMode: true, previousContext }
+        { previousContext }
       );
       return NextResponse.json({ summary: result.summary });
     }
@@ -36,16 +36,6 @@ export const POST = createApiRoute(async (request: NextRequest) => {
 
     if (!project) {
       throw new ApiError('Project not found', 404);
-    }
-
-    // Quick mode: Skip fetching commit details for faster generation
-    if (quickMode) {
-      const result = await aiChangelogService.generateChangelog(
-        commits as GitCommit[],
-        project.context,
-        { quickMode: true, previousContext }
-      );
-      return NextResponse.json({ summary: result.summary, content: result.content });
     }
 
     // Use the commit service to get or fetch commits
